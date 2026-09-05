@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, SafeAreaView, StatusBar, TextInput, Modal, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, SafeAreaView, StatusBar, TextInput, Modal, Image, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 const translations = {
   ar: {
     appName: "PayPop",
-    splashDesc: "طريقتك الأذكية لجمع الأرباح، شدات الألعاب، وسحب الأموال بكل سهولة.",
-    startNow: "ابدأ الآن",
+    splashDesc: "طريقتك الأذكية لجمع الأرباح، شدات الألعاب، وسحب العملات الرقمية بكل سهولة.",
+    startNow: "ابدأ التعدين الآن",
     emailPlaceholder: "البريد الإلكتروني",
     passPlaceholder: "كلمة السر",
     forgotPass: "نسيت كلمة السر؟",
@@ -14,19 +14,19 @@ const translations = {
     signUp: "إنشاء الحساب",
     hasAccount: "لديك حساب بالفعل؟ تسجيل الدخول",
     noAccount: "ليس لديك حساب؟ إنشاء حساب جديد",
-    dashboard: "لوحة التحكم (Dashboard)",
-    points: "نقطة",
-    usdValue: "تساوي",
-    todayEarned: "ما جمعت اليوم",
-    invitedFriends: "الأصدقاء المدعوون",
-    dailyChallenge: "التحدي اليومي",
-    dailyDesc: "ادخل كل يوم وأقسح هدية التسجيل اليومي (+50 نقطة)",
-    claimDaily: "استلام الهدية اليومية",
-    earnTitle: "⚡ طرق جمع النقاط والأرباح",
-    earnSubtitle: "اختر الطريقة المناسبة وابدأ في ربح النقاط فوراً",
-    walletTitle: "💳 طلب سحب الأرباح والجوائز",
-    walletSubtitle: "اختر وسيلة السحب المناسبة بالضغط على المربع",
-    profileSettings: "إعدادات التطبيق والحساب",
+    dashboard: "محفظة توكنات PayPop",
+    points: "رصيد PPT",
+    usdValue: "القيمة السوقية التقديرية",
+    todayEarned: "ما تم تعدينه اليوم",
+    invitedFriends: "المعدنون المدعوون",
+    dailyChallenge: "التعدين اليومي للتوكنات",
+    dailyDesc: "سجل حضورك اليومي واحصل على مكافأة فورية من عملات (+50 PPT)",
+    claimDaily: "استلام مكافأة التوكن",
+    earnTitle: "⚡ مركز تعدين وجمع توكنات PPT",
+    earnSubtitle: "اختر طريقة التعدين واحصل على توكنات فريدة ومميزة",
+    walletTitle: "💳 سحب وصرف التوكنات",
+    walletSubtitle: "اختر طريقة التحويل أو السحب المفضلة لديك",
+    profileSettings: "إعدادات الحساب والتوكن",
     appSettings: "إعدادات التطبيق",
     darkMode: "الوضع الداكن",
     myCountry: "البلد الخاص بي",
@@ -35,7 +35,7 @@ const translations = {
     supportCenter: "مركز الدعم والمساعدة",
     logout: "تسجيل الخروج",
     homeNav: "الرئيسية",
-    earnNav: "اربح",
+    earnNav: "التعدين",
     walletNav: "المحفظة",
     profileNav: "حسابي",
     selectLangTitle: "اختر لغة التطبيق",
@@ -44,8 +44,8 @@ const translations = {
   },
   fr: {
     appName: "PayPop",
-    splashDesc: "Votre moyen le plus intelligent de gagner des profits, des UC/Gemmes et de retirer de l'argent facilement.",
-    startNow: "Commencer",
+    splashDesc: "Votre moyen le plus intelligent de gagner des profits, des UC et des tokens exclusifs.",
+    startNow: "Commencer le minage",
     emailPlaceholder: "E-mail",
     passPlaceholder: "Mot de passe",
     forgotPass: "Mot de passe oublié ?",
@@ -53,18 +53,18 @@ const translations = {
     signUp: "Créer un compte",
     hasAccount: "Vous avez déjà un compte ? Connexion",
     noAccount: "Pas de compte ? Créer un compte",
-    dashboard: "Tableau de bord",
-    points: "points",
-    usdValue: "Équivaut à",
-    todayEarned: "Gagné aujourd'hui",
-    invitedFriends: "Amis invités",
-    dailyChallenge: "Défi quotidien",
-    dailyDesc: "Rejoignez chaque jour et réclamez le cadeau (+50 points)",
-    claimDaily: "Réclamer le cadeau",
-    earnTitle: "⚡ Méthodes de gain",
-    earnSubtitle: "Choisissez la méthode et gagnez des points instantanément",
-    walletTitle: "💳 Demande de retrait",
-    walletSubtitle: "Choisissez votre méthode de retrait en cliquant dessus",
+    dashboard: "Portefeuille Token PayPop",
+    points: "Tokens PPT",
+    usdValue: "Valeur estimée",
+    todayEarned: "Miné aujourd'hui",
+    invitedFriends: "Amis mineurs",
+    dailyChallenge: "Minage Quotidien",
+    dailyDesc: "Réclamez votre récompense quotidienne en tokens (+50 PPT)",
+    claimDaily: "Réclamer les tokens",
+    earnTitle: "⚡ Centre de Minage PPT",
+    earnSubtitle: "Choisissez une méthode et gagnez des tokens instantanément",
+    walletTitle: "💳 Retrait des Tokens PPT",
+    walletSubtitle: "Choisissez votre méthode de retrait",
     profileSettings: "Paramètres du compte",
     appSettings: "Paramètres de l'application",
     darkMode: "Mode Sombre",
@@ -74,7 +74,7 @@ const translations = {
     supportCenter: "Centre d'assistance",
     logout: "Se déconnecter",
     homeNav: "Accueil",
-    earnNav: "Gagner",
+    earnNav: "Miner",
     walletNav: "Portefeuille",
     profileNav: "Profil",
     selectLangTitle: "Choisir la langue de l'application",
@@ -83,8 +83,8 @@ const translations = {
   },
   en: {
     appName: "PayPop",
-    splashDesc: "Your smartest way to collect profits, game UC, and withdraw cash easily.",
-    startNow: "Get Started",
+    splashDesc: "Your smartest way to collect profits and unique ecosystem tokens.",
+    startNow: "Start Mining",
     emailPlaceholder: "Email",
     passPlaceholder: "Password",
     forgotPass: "Forgot Password?",
@@ -92,18 +92,18 @@ const translations = {
     signUp: "Sign Up",
     hasAccount: "Already have an account? Log In",
     noAccount: "Don't have an account? Sign Up",
-    dashboard: "Dashboard",
-    points: "points",
-    usdValue: "Equals",
-    todayEarned: "Earned Today",
-    invitedFriends: "Invited Friends",
-    dailyChallenge: "Daily Challenge",
-    dailyDesc: "Log in daily and claim your daily reward (+50 points)",
-    claimDaily: "Claim Daily Reward",
-    earnTitle: "⚡ Ways to Earn Points",
-    earnSubtitle: "Choose the right method and start earning instantly",
-    walletTitle: "💳 Request Payout",
-    walletSubtitle: "Choose your payout method by tapping the box",
+    dashboard: "PayPop Token Wallet",
+    points: "PPT Balance",
+    usdValue: "Market Value",
+    todayEarned: "Mined Today",
+    invitedFriends: "Invited Miners",
+    dailyChallenge: "Daily Token Mining",
+    dailyDesc: "Claim your daily ecosystem token reward (+50 PPT)",
+    claimDaily: "Claim Token Reward",
+    earnTitle: "⚡ PPT Token Mining Center",
+    earnSubtitle: "Choose a method and earn exclusive PayPop tokens",
+    walletTitle: "💳 Token Payout",
+    walletSubtitle: "Choose your payout method",
     profileSettings: "App & Account Settings",
     appSettings: "App Settings",
     darkMode: "Dark Mode",
@@ -113,7 +113,7 @@ const translations = {
     supportCenter: "Support Center",
     logout: "Log Out",
     homeNav: "Home",
-    earnNav: "Earn",
+    earnNav: "Mine",
     walletNav: "Wallet",
     profileNav: "Profile",
     selectLangTitle: "Select App Language",
@@ -128,18 +128,15 @@ export default function App() {
   const [points, setPoints] = useState(1405);
   const [userEmail, setUserEmail] = useState('');
   
-  // حالات الإعدادات الجديدة (الوضع الداكن، البلد، العملة)
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [currentCurrency, setCurrentCurrency] = useState('USD'); // USD, EUR, DZD, EGP
+  const [currentCurrency, setCurrentCurrency] = useState('USD'); 
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
 
-  // حالة اللغة
   const [currentLang, setCurrentLang] = useState('ar');
   const [langModalVisible, setLangModalVisible] = useState(false);
 
   const t = translations[currentLang];
 
-  // إعدادات عجلة الحظ
   const [spinCount, setSpinCount] = useState(0);
   const [userAvatar, setUserAvatar] = useState('👤');
   const [isCustomImage, setIsCustomImage] = useState(false);
@@ -149,13 +146,29 @@ export default function App() {
   const [withdrawInput, setWithdrawInput] = useState('');
 
   const [wheelModalVisible, setWheelModalVisible] = useState(false);
-  const [wheelRewardText, setWheelRewardText] = useState('اضغط لتدوير العجلة واكتشاف نصيبك!');
+  const [wheelRewardText, setWheelRewardText] = useState('اضغط لتدوير عجلة التوكنات واكتشاف نصيبك من PPT!');
   const [isSpinning, setIsSpinning] = useState(false);
   
   const referralCode = "PAYPOP-8849";
   const emojisList = ['😎', '🦊', '⚡', '🎮', '🦁'];
 
-  // حساب قيمة النقاط بناءً على العملة المختارة
+  // دالة فتح واتساب مباشرة برقمك الحقيقي
+  const openWhatsAppSupport = () => {
+    const phoneNumber = "213667814377"; // الرقم بدون علامة +
+    const message = encodeURIComponent("مرحباً، أواجه مشكلة أو استفسار بخصوص تطبيق PayPop.");
+    const url = `https://wa.me/${phoneNumber}?text=${message}`;
+
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (supported) {
+          Linking.openURL(url);
+        } else {
+          Alert.alert("خطأ", "لا يمكن فتح تطبيق واتساب حالياً.");
+        }
+      })
+      .catch((err) => console.error("An error occurred", err));
+  };
+
   const getConvertedValue = () => {
     const usdVal = points / 1000;
     switch (currentCurrency) {
@@ -168,13 +181,13 @@ export default function App() {
 
   const addPoints = (amount, source) => {
     setPoints(prev => prev + amount);
-    Alert.alert("تهانينا!", `حصلت على ${amount} نقطة من ${source}`);
+    Alert.alert("عمليات التعدين ناجحة!", `تم إضافة +${amount} من توكنات PPT بنجاح من (${source}) 💎`);
   };
 
   const spinWheelAction = () => {
     if (isSpinning) return;
     setIsSpinning(true);
-    setWheelRewardText('جاري تدوير العجلة...');
+    setWheelRewardText('جاري سحب التوكنات العشوائية عبر عجلة PayPop...');
 
     setTimeout(() => {
       let reward = 10;
@@ -183,7 +196,7 @@ export default function App() {
 
       setPoints(prev => prev + reward);
       setSpinCount(prev => prev + 1);
-      setWheelRewardText(`مبروك! ربحت ${reward} نقطة في هذه التدويرة 🎉`);
+      setWheelRewardText(`كفو! ربحت ${reward} توكن PPT جديد 🎉`);
       setIsSpinning(false);
     }, 1500);
   };
@@ -191,14 +204,14 @@ export default function App() {
   const executeWithdraw = () => {
     if (!selectedMethod) return;
     if (points < selectedMethod.minPoints) {
-      Alert.alert("الرصيد غير كافٍ", `الحد الأدنى للسحب عبر ${selectedMethod.name} هو ${selectedMethod.minPoints} نقطة.`);
+      Alert.alert("رصيد توكنات PPT غير كافٍ", `الحد الأدنى للسحب عبر ${selectedMethod.name} هو ${selectedMethod.minPoints} PPT.`);
       return;
     }
     if (!withdrawInput.trim()) {
-      Alert.alert("خطأ", `يرجى إدخال ${selectedMethod.inputPlaceholder} بشكل صحيح.`);
+      Alert.alert("خطأ في البيانات", `يرجى إدخال ${selectedMethod.inputPlaceholder} بشكل صحيح.`);
       return;
     }
-    Alert.alert("تم إرسال الطلب بنجاح", `سيتم تحويل الأرباح عبر (${selectedMethod.name}) إلى:\n\n${withdrawInput}\n\nخلال 24 ساعة.`);
+    Alert.alert("تم إرسال طلب صرف التوكنات", `سيتم تحويل أرباحك من عملات (${selectedMethod.name}) إلى:\n\n${withdrawInput}\n\nخلال 24 ساعة القادمة.`);
     setWithdrawInput('');
     setSelectedMethod(null);
   };
@@ -238,33 +251,32 @@ export default function App() {
   };
 
   const withdrawalMethods = [
-    { id: 'baridimob', name: 'بريدي موب', icon: 'https://img.icons8.com/color/96/card-security.png', minPoints: 5000, inputPlaceholder: 'رقم RIP أو الحساب البريدي', keyboardType: 'numeric' },
-    { id: 'redotpay', name: 'RedotPay', icon: 'https://img.icons8.com/color/96/bank-card-back-side.png', minPoints: 5000, inputPlaceholder: 'البريد الإلكتروني أو ID', keyboardType: 'default' },
+    { id: 'baridimob', name: 'بريدي موب', icon: 'https://i.ibb.co/68v87gW/baridimob.png', minPoints: 5000, inputPlaceholder: 'رقم RIP أو الحساب البريدي', keyboardType: 'numeric' },
+    { id: 'redotpay', name: 'RedotPay', icon: 'https://i.ibb.co/3s682Xh/redotpay.png', minPoints: 5000, inputPlaceholder: 'البريد الإلكتروني أو ID', keyboardType: 'default' },
     { id: 'paypal', name: 'بايبال PayPal', icon: 'https://img.icons8.com/color/96/paypal.png', minPoints: 3000, inputPlaceholder: 'البريد الإلكتروني (Email)', keyboardType: 'email-address' },
-    { id: 'binance', name: 'بايننس Binance', icon: 'https://img.icons8.com/color/96/binance.png', minPoints: 2000, inputPlaceholder: 'Binance ID أو USDT (BEP20)', keyboardType: 'default' },
+    { id: 'binance', name: 'بايننس Binance', icon: 'https://i.ibb.co/9v0F90V/binance.png', minPoints: 2000, inputPlaceholder: 'Binance ID أو USDT (BEP20)', keyboardType: 'default' },
     { id: 'freefire', name: 'فري فاير Free Fire', icon: 'https://img.icons8.com/color/96/sword.png', minPoints: 1500, inputPlaceholder: 'معرف اللاعب (Player ID)', keyboardType: 'numeric' },
     { id: 'pubg', name: 'ببجي موبايل PUBG', icon: 'https://img.icons8.com/color/96/pubg.png', minPoints: 1500, inputPlaceholder: 'معرف اللاعب (PUBG ID)', keyboardType: 'numeric' }
   ];
 
   const earnMethods = [
-    { id: 'wheel', name: 'عجلة الحظ اليومية', icon: 'https://img.icons8.com/color/96/luck.png', desc: 'أدر العجلة واربح نقاط متجددة', onPress: () => setWheelModalVisible(true) },
-    { id: 'ads', name: 'مشاهدة الإعلانات', icon: 'https://img.icons8.com/color/96/video.png', desc: 'شاهد إعلاناً قصيراً (+30 نقطة)', onPress: () => addPoints(30, "مشاهدة إعلان ترويجي") },
-    { id: 'survey', name: 'استطلاعات الرأي', icon: 'https://img.icons8.com/color/96/faq.png', desc: 'أجب عن أسئلة خفيفة (+20 نقطة)', onPress: () => addPoints(20, "استطلاع الرأي الثقافي") },
-    { id: 'games', name: 'إلعب وأحصل على نقاط', icon: 'https://img.icons8.com/color/96/controller.png', desc: 'استمتع بالألعاب واجمع الأرباح', onPress: () => Alert.alert("قسم الألعاب", "قريباً!") }
+    { id: 'wheel', name: 'عجلة توكنات الحظ', icon: 'https://img.icons8.com/fluency/96/luck.png', desc: 'أدر العجلة واكسب توكنات PPT فورية', onPress: () => setWheelModalVisible(true) },
+    { id: 'ads', name: 'التعدين عبر مشاهدة الإعلانات', icon: 'https://img.icons8.com/color/96/video.png', desc: 'شاهد إعلاناً قصيراً واحصل على (+30 PPT)', onPress: () => addPoints(30, "مشاهدة إعلان ترويجي") },
+    { id: 'survey', name: 'استطلاعات الرأي الرقمية', icon: 'https://img.icons8.com/color/96/faq.png', desc: 'أجب عن أسئلة خفيفة واربح (+20 PPT)', onPress: () => addPoints(20, "استطلاع الرأي الثقافي") },
+    { id: 'games', name: 'العب واكسب توكنات PPT', icon: 'https://img.icons8.com/color/96/controller.png', desc: 'استمتع بالألعاب واجمع رصيد إضافي', onPress: () => Alert.alert("قسم الألعاب", "قريباً تفعيل تحديات الألعاب!") }
   ];
 
   const isRtl = currentLang === 'ar';
   const textDirectionStyle = { textAlign: isRtl ? 'right' : 'left' };
   const rowDirectionStyle = { flexDirection: isRtl ? 'row-reverse' : 'row' };
 
-  // ثيم الألوان حسب الوضع الداكن أو الفاتح
   const themeStyles = {
     container: { backgroundColor: isDarkMode ? '#0F172A' : '#F8FAFC' },
     card: { backgroundColor: isDarkMode ? '#1E293B' : 'white' },
     textColor: { color: isDarkMode ? '#F1F5F9' : '#1E293B' },
     subTextColor: { color: isDarkMode ? '#94A3B8' : '#64748B' },
     inputBg: { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', color: isDarkMode ? 'white' : 'black', borderColor: isDarkMode ? '#334155' : '#E2E8F0' },
-    navBg: { backgroundColor: isDarkMode ? '#1E293B' : 'white', borderTopColor: isDarkMode ? '#334155' : '#E2E8F0' },
+    navBg: { backgroundColor: isDarkMode ? '#1E293B' : 'white', borderTopColor: isDarkMode ? '#334155' : '#334155' },
     modalBg: { backgroundColor: isDarkMode ? '#1E293B' : 'white' }
   };
 
@@ -274,9 +286,10 @@ export default function App() {
       
       {currentScreen !== 'splash' && currentScreen !== 'login' && (
         <View style={[styles.header, rowDirectionStyle]}>
-          <Text style={styles.logo}>{t.appName}</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{points} {t.points} ({getConvertedValue()})</Text>
+          <Text style={styles.logo}>{t.appName} <Text style={{fontSize: 12, color: '#34D399'}}>EcoSystem</Text></Text>
+          <View style={styles.tokenHeaderBadge}>
+            <Text style={styles.tokenSymbolText}>💎 PPT</Text>
+            <Text style={styles.badgeText}>{points}</Text>
           </View>
         </View>
       )}
@@ -284,6 +297,9 @@ export default function App() {
       {currentScreen === 'splash' && (
         <View style={styles.splashContainer}>
           <View style={[styles.splashCard, themeStyles.card]}>
+            <View style={styles.splashTokenBadge}>
+              <Text style={{fontSize: 40}}>💎</Text>
+            </View>
             <Text style={styles.splashTitle}>{t.appName}</Text>
             <Text style={[styles.splashDesc, themeStyles.subTextColor]}>{t.splashDesc}</Text>
             <TouchableOpacity style={styles.splashBtn} onPress={() => setCurrentScreen('login')}>
@@ -296,6 +312,9 @@ export default function App() {
       {currentScreen === 'login' && (
         <ScrollView contentContainerStyle={styles.authContainer}>
           <View style={styles.logoBox}>
+            <View style={styles.loginTokenGlow}>
+              <Text style={{fontSize: 32}}>💎</Text>
+            </View>
             <Text style={styles.appTitle}>{t.appName}</Text>
           </View>
           <Text style={[styles.subTitle, themeStyles.subTextColor]}>{isSignUp ? t.signUp : t.login}</Text>
@@ -314,7 +333,7 @@ export default function App() {
           />
 
           {!isSignUp && (
-            <TouchableOpacity style={[styles.forgotBtn, {alignSelf: isRtl ? 'flex-start' : 'flex-end'}]} onPress={() => Alert.alert("استعادة", "تم إرسال رابط الاستعادة.")}>
+            <TouchableOpacity style={[styles.forgotBtn, {alignSelf: isRtl ? 'flex-start' : 'flex-end'}]} onPress={() => Alert.alert("استعادة", "تم إرسال رابط استعادة محفظة التوكن.")}>
               <Text style={styles.forgotText}>{t.forgotPass}</Text>
             </TouchableOpacity>
           )}
@@ -326,24 +345,61 @@ export default function App() {
           <TouchableOpacity style={styles.switchAuthBtn} onPress={() => setIsSignUp(!isSignUp)}>
             <Text style={styles.switchAuthText}>{isSignUp ? t.hasAccount : t.noAccount}</Text>
           </TouchableOpacity>
+
+          <View style={styles.socialAuthContainer}>
+            <View style={styles.socialDividerRow}>
+              <View style={[styles.socialDividerLine, {backgroundColor: isDarkMode ? '#334155' : '#E2E8F0'}]} />
+              <Text style={[styles.socialDividerText, themeStyles.subTextColor]}>أو المتابعة عبر</Text>
+              <View style={[styles.socialDividerLine, {backgroundColor: isDarkMode ? '#334155' : '#E2E8F0'}]} />
+            </View>
+
+            <View style={[styles.socialBtnsRow, rowDirectionStyle]}>
+              <TouchableOpacity 
+                style={[styles.socialBtn, {backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF', borderColor: isDarkMode ? '#334155' : '#E2E8F0'}]} 
+                onPress={() => {
+                  Alert.alert("تسجيل جوجل", "جاري فتح بوابة المصادقة عبر Google...");
+                  setTimeout(() => setCurrentScreen('home'), 1000);
+                }}
+              >
+                <Image source={{ uri: 'https://img.icons8.com/color/96/google-logo.png' }} style={styles.socialIcon} />
+                <Text style={[styles.socialBtnText, themeStyles.textColor]}>Google</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.socialBtn, {backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF', borderColor: isDarkMode ? '#334155' : '#E2E8F0'}]} 
+                onPress={() => {
+                  Alert.alert("تسجيل فايسبوك", "جاري فتح بوابة المصادقة عبر Facebook...");
+                  setTimeout(() => setCurrentScreen('home'), 1000);
+                }}
+              >
+                <Image source={{ uri: 'https://img.icons8.com/color/96/facebook-new.png' }} style={styles.socialIcon} />
+                <Text style={[styles.socialBtnText, themeStyles.textColor]}>Facebook</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </ScrollView>
       )}
 
       {currentScreen === 'home' && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.card, themeStyles.card]}>
-            <Text style={[styles.cardTitle, themeStyles.textColor, textDirectionStyle]}>{t.dashboard}</Text>
-            <Text style={styles.pointsText}>{points} {t.points}</Text>
-            <Text style={styles.subPoints}>{t.usdValue} {getConvertedValue()}</Text>
+          <View style={[styles.tokenCardContainer, themeStyles.card]}>
+            <View style={styles.tokenGlowCircle}>
+              <Text style={{fontSize: 28}}>💎</Text>
+            </View>
+            <Text style={[styles.cardTitle, themeStyles.textColor, {marginTop: 8}]}>{t.dashboard}</Text>
+            <Text style={styles.tokenAmountText}>{points} <Text style={{fontSize: 18, color: '#10B981'}}>PPT</Text></Text>
+            <View style={styles.tokenValueBadge}>
+              <Text style={styles.tokenValueText}>{t.usdValue}: {getConvertedValue()}</Text>
+            </View>
           </View>
 
           <View style={[styles.statsRow, rowDirectionStyle]}>
             <View style={[styles.statBox, themeStyles.card]}>
-              <Text style={styles.statNumber}>150</Text>
+              <Text style={styles.statNumber}>+150 PPT</Text>
               <Text style={[styles.statLabel, themeStyles.subTextColor]}>{t.todayEarned}</Text>
             </View>
             <View style={[styles.statBox, themeStyles.card]}>
-              <Text style={styles.statNumber}>3</Text>
+              <Text style={styles.statNumber}>3 PPT</Text>
               <Text style={[styles.statLabel, themeStyles.subTextColor]}>{t.invitedFriends}</Text>
             </View>
           </View>
@@ -351,7 +407,7 @@ export default function App() {
           <View style={[styles.card, themeStyles.card]}>
             <Text style={[styles.cardTitle, themeStyles.textColor, textDirectionStyle]}>{t.dailyChallenge}</Text>
             <Text style={[styles.cardDesc, themeStyles.subTextColor, textDirectionStyle]}>{t.dailyDesc}</Text>
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#F59E0B'}]} onPress={() => addPoints(50, "هدية التحدي اليومي")}>
+            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#F59E0B'}]} onPress={() => addPoints(50, "مكافأة التعدين اليومي")}>
               <Text style={styles.btnText}>{t.claimDaily}</Text>
             </TouchableOpacity>
           </View>
@@ -392,7 +448,7 @@ export default function App() {
                 >
                   <Image source={{ uri: method.icon }} style={styles.gridItemImage} />
                   <Text style={[styles.gridItemName, themeStyles.textColor]}>{method.name}</Text>
-                  <Text style={[styles.gridItemMin, themeStyles.subTextColor]}>Min: {method.minPoints}</Text>
+                  <Text style={[styles.gridItemMin, themeStyles.subTextColor]}>Min: {method.minPoints} PPT</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -416,8 +472,8 @@ export default function App() {
               </TouchableOpacity>
             </View>
 
-            <Text style={[styles.profileName, themeStyles.textColor]}>{userEmail ? userEmail.split('@')[0] : "Youssef Gamer"}</Text>
-            <Text style={[styles.profileEmail, themeStyles.subTextColor]}>{userEmail || "user@paypop.com"}</Text>
+            <Text style={[styles.profileName, themeStyles.textColor]}>{userEmail ? userEmail.split('@')[0] : "Youssef PPT Miner"}</Text>
+            <Text style={[styles.profileEmail, themeStyles.subTextColor]}>{userEmail || "miner@paypop.token"}</Text>
 
             <View style={[styles.emojisRow, rowDirectionStyle]}>
               {emojisList.map((emo, index) => (
@@ -430,41 +486,37 @@ export default function App() {
 
           <View style={[styles.card, themeStyles.card]}>
             <TouchableOpacity style={styles.primaryBtn} onPress={() => setReferralModalVisible(true)}>
-              <Text style={styles.btnText}>Referral System</Text>
+              <Text style={styles.btnText}>إحالة معدني توكن PPT 🚀</Text>
             </TouchableOpacity>
           </View>
 
-          {/* قسم إعدادات التطبيق المحدثة */}
           <View style={[styles.card, themeStyles.card]}>
             <Text style={[styles.cardTitle, themeStyles.textColor, textDirectionStyle]}>{t.profileSettings}</Text>
             
-            {/* زر تغيير الوضع لداكن */}
             <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => setIsDarkMode(!isDarkMode)}>
               <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
               <Text style={[styles.menuText, themeStyles.textColor]}>{t.darkMode} ({isDarkMode ? 'ON 🌙' : 'OFF ☀️'})</Text>
             </TouchableOpacity>
 
-            {/* زر معرفة البلد */}
-            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => Alert.alert(t.myCountry, "الجزائر (Algeria) 🇩🇿 - الموقع الحالي مضبوط بنجاح.")}>
+            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => Alert.alert(t.myCountry, "الجزائر (Algeria) 🇩🇿 - شبكة توكنات PayPop نشطة.")}>
               <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
               <Text style={[styles.menuText, themeStyles.textColor]}>{t.myCountry}: الجزائر 🇩🇿</Text>
             </TouchableOpacity>
 
-            {/* زر تغيير العملة */}
             <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => setCurrencyModalVisible(true)}>
               <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
               <Text style={[styles.menuText, themeStyles.textColor]}>{t.currency} ({currentCurrency})</Text>
             </TouchableOpacity>
 
-            {/* زر تغيير اللغة */}
             <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => setLangModalVisible(true)}>
               <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
               <Text style={[styles.menuText, themeStyles.textColor]}>{t.language} ({currentLang.toUpperCase()})</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => Alert.alert("Support", "Contact us.")}>
+            {/* تم ربط زر مركز الدعم والمساعدة بالواتساب مباشرة */}
+            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={openWhatsAppSupport}>
               <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
-              <Text style={[styles.menuText, themeStyles.textColor]}>{t.supportCenter}</Text>
+              <Text style={[styles.menuText, themeStyles.textColor]}>💬 {t.supportCenter} (WhatsApp)</Text>
             </TouchableOpacity>
           </View>
 
@@ -474,7 +526,6 @@ export default function App() {
         </ScrollView>
       )}
 
-      {/* نافذة اختيار العملة */}
       <Modal animationType="slide" transparent={true} visible={currencyModalVisible} onRequestClose={() => setCurrencyModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, themeStyles.modalBg]}>
@@ -497,7 +548,6 @@ export default function App() {
         </View>
       </Modal>
 
-      {/* نافذة اختيار اللغة */}
       <Modal animationType="slide" transparent={true} visible={langModalVisible} onRequestClose={() => setLangModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, themeStyles.modalBg]}>
@@ -522,17 +572,16 @@ export default function App() {
         </View>
       </Modal>
 
-      {/* نافذة عجلة الحظ */}
       <Modal animationType="slide" transparent={true} visible={wheelModalVisible} onRequestClose={() => setWheelModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, themeStyles.modalBg]}>
-            <Text style={[styles.modalTitle, themeStyles.textColor]}>🎡 عجلة الحظ اليومية</Text>
+            <Text style={[styles.modalTitle, themeStyles.textColor]}>🎡 عجلة تعدين توكنات PPT</Text>
             <View style={[styles.wheelBox, isDarkMode && {backgroundColor: '#0F172A', borderColor: '#334155'}]}>
-              <Image source={{ uri: 'https://img.icons8.com/color/96/luck.png' }} style={{ width: 60, height: 60, marginBottom: 10 }} />
+              <Image source={{ uri: 'https://img.icons8.com/fluency/96/luck.png' }} style={{ width: 60, height: 60, marginBottom: 10 }} />
               <Text style={styles.wheelResultText}>{wheelRewardText}</Text>
             </View>
             <TouchableOpacity style={[styles.primaryBtn, isSpinning && {backgroundColor: '#94A3B8'}]} onPress={spinWheelAction} disabled={isSpinning}>
-              <Text style={styles.btnText}>{isSpinning ? "جاري الدوران..." : "أدر العجلة الآن"}</Text>
+              <Text style={styles.btnText}>{isSpinning ? "جاري استخراج التوكن..." : "أدر العجلة واكسب PPT"}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#94A3B8', marginTop: 10}]} onPress={() => setWheelModalVisible(false)}>
               <Text style={styles.btnText}>إغلاق</Text>
@@ -541,7 +590,6 @@ export default function App() {
         </View>
       </Modal>
 
-      {/* نافذة السحب */}
       <Modal animationType="slide" transparent={true} visible={selectedMethod !== null} onRequestClose={() => setSelectedMethod(null)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, themeStyles.modalBg]}>
@@ -549,10 +597,10 @@ export default function App() {
               <>
                 <View style={{ alignItems: 'center', marginBottom: 10 }}>
                   <Image source={{ uri: selectedMethod.icon }} style={{ width: 50, height: 50, marginBottom: 5 }} />
-                  <Text style={[styles.modalTitle, themeStyles.textColor]}>{selectedMethod.name}</Text>
+                  <Text style={[styles.modalTitle, themeStyles.textColor]}>صرف توكنات عبر {selectedMethod.name}</Text>
                 </View>
                 <TextInput style={[styles.modalInput, themeStyles.inputBg, textDirectionStyle]} placeholder={selectedMethod.inputPlaceholder} placeholderTextColor="#888" keyboardType={selectedMethod.keyboardType} value={withdrawInput} onChangeText={setWithdrawInput} />
-                <TouchableOpacity style={styles.primaryBtn} onPress={executeWithdraw}><Text style={styles.btnText}>تأكيد طلب السحب</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.primaryBtn} onPress={executeWithdraw}><Text style={styles.btnText}>تأكيد صرف توكنات PPT</Text></TouchableOpacity>
                 <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#94A3B8', marginTop: 10}]} onPress={() => setSelectedMethod(null)}><Text style={styles.btnText}>إلغاء</Text></TouchableOpacity>
               </>
             )}
@@ -560,13 +608,12 @@ export default function App() {
         </View>
       </Modal>
 
-      {/* نافذة الإحالة */}
       <Modal animationType="slide" transparent={true} visible={referralModalVisible} onRequestClose={() => setReferralModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, themeStyles.modalBg]}>
-            <Text style={[styles.cardTitle, themeStyles.textColor]}>دعوة الأصدقاء</Text>
+            <Text style={[styles.cardTitle, themeStyles.textColor]}>شبكة إحالة معدني PayPop</Text>
             <Text style={styles.refCode}>{referralCode}</Text>
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#10B981', marginTop: 15}]} onPress={() => { Alert.alert("تم", "تم النسخ!"); setReferralModalVisible(false); }}><Text style={styles.btnText}>نسخ الكود</Text></TouchableOpacity>
+            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#10B981', marginTop: 15}]} onPress={() => { Alert.alert("تم النسخ", "تم نسخ كود إحالة التوكن بنجاح!"); setReferralModalVisible(false); }}><Text style={styles.btnText}>نسخ كود الإحالة</Text></TouchableOpacity>
             <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#EF4444', marginTop: 10}]} onPress={() => setReferralModalVisible(false)}><Text style={styles.btnText}>إغلاق</Text></TouchableOpacity>
           </View>
         </View>
@@ -596,11 +643,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: { backgroundColor: '#5849E2', padding: 15, justifyContent: 'space-between', alignItems: 'center' },
   logo: { color: 'white', fontSize: 22, fontWeight: 'bold' },
-  badge: { backgroundColor: '#4738C4', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  tokenHeaderBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#4738C4', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 5 },
+  tokenSymbolText: { color: '#34D399', fontWeight: 'bold', fontSize: 13 },
   badgeText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
   
   splashContainer: { flex: 1, backgroundColor: '#5849E2', justifyContent: 'center', alignItems: 'center', padding: 20 },
   splashCard: { width: '100%', backgroundColor: 'white', padding: 30, borderRadius: 20, alignItems: 'center', elevation: 10 },
+  splashTokenBadge: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#EDE9FE', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
   splashTitle: { fontSize: 36, fontWeight: 'bold', color: '#5849E2', marginBottom: 10 },
   splashDesc: { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 25, lineHeight: 22 },
   splashBtn: { backgroundColor: '#5849E2', width: '100%', padding: 14, borderRadius: 10, alignItems: 'center' },
@@ -608,17 +657,23 @@ const styles = StyleSheet.create({
 
   authContainer: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   logoBox: { alignItems: 'center', marginBottom: 15 },
+  loginTokenGlow: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#EDE9FE', justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
   appTitle: { fontSize: 36, fontWeight: 'bold', color: '#5849E2', textAlign: 'center' },
   subTitle: { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 20 },
   scrollContent: { padding: 15, paddingBottom: 80 },
+  
+  tokenCardContainer: { backgroundColor: 'white', padding: 20, borderRadius: 16, marginBottom: 15, alignItems: 'center', elevation: 3, borderWidth: 1.5, borderColor: '#DDD6FE' },
+  tokenGlowCircle: { width: 55, height: 55, borderRadius: 27.5, backgroundColor: '#EDE9FE', justifyContent: 'center', alignItems: 'center', marginBottom: 5 },
+  tokenAmountText: { fontSize: 34, fontWeight: 'bold', color: '#5849E2', marginVertical: 4 },
+  tokenValueBadge: { backgroundColor: '#F1F5F9', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, marginTop: 4 },
+  tokenValueText: { color: '#64748B', fontSize: 12, fontWeight: 'bold' },
+
   card: { backgroundColor: 'white', padding: 15, borderRadius: 12, marginBottom: 15, elevation: 2 },
   cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#1E293B', marginBottom: 12 },
   cardDesc: { color: '#64748B', fontSize: 13, marginBottom: 10 },
-  pointsText: { fontSize: 32, fontWeight: 'bold', color: '#5849E2', textAlign: 'center', marginVertical: 8 },
-  subPoints: { textAlign: 'center', color: '#94A3B8', fontSize: 12 },
   statsRow: { gap: 10, marginBottom: 15 },
   statBox: { flex: 1, backgroundColor: 'white', padding: 15, borderRadius: 12, alignItems: 'center', elevation: 2 },
-  statNumber: { fontSize: 20, fontWeight: 'bold', color: '#5849E2', marginBottom: 5 },
+  statNumber: { fontSize: 18, fontWeight: 'bold', color: '#5849E2', marginBottom: 5 },
   statLabel: { fontSize: 12, color: '#64748B', textAlign: 'center' },
   primaryBtn: { backgroundColor: '#5849E2', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 5 },
   btnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
@@ -637,6 +692,15 @@ const styles = StyleSheet.create({
   forgotText: { color: '#5849E2', fontSize: 13 },
   switchAuthBtn: { alignItems: 'center', marginTop: 15 },
   switchAuthText: { color: '#5849E2', fontSize: 14, fontWeight: 'bold' },
+
+  socialAuthContainer: { marginTop: 25, width: '100%' },
+  socialDividerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
+  socialDividerLine: { flex: 1, height: 1 },
+  socialDividerText: { marginHorizontal: 10, fontSize: 12, fontWeight: 'bold' },
+  socialBtnsRow: { justifyContent: 'space-between', gap: 10 },
+  socialBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8, borderWidth: 1, elevation: 1, gap: 8 },
+  socialIcon: { width: 20, height: 20, resizeMode: 'contain' },
+  socialBtnText: { fontSize: 14, fontWeight: 'bold' },
 
   refCode: { fontSize: 18, fontWeight: 'bold', color: '#5849E2', textAlign: 'center', backgroundColor: '#F1F5F9', padding: 10, borderRadius: 8, letterSpacing: 2 },
   profileHeaderCard: { backgroundColor: 'white', padding: 20, borderRadius: 12, marginBottom: 15, alignItems: 'center', elevation: 2 },
@@ -670,4 +734,3 @@ const styles = StyleSheet.create({
   navText: { fontSize: 13, color: '#64748B', fontWeight: 'bold' },
   activeNav: { color: '#5849E2' }
 });
-
