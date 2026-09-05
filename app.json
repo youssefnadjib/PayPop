@@ -9,18 +9,17 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#6C5CE7"
+      "backgroundColor": "#4C5CE7"
     },
-    "ios": { "supportsTablet": true },
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#6C5CE7"
+        "backgroundColor": "#4C5CE7"
       },
       "package": "com.paypop.rewards"
-    },
-    "react-native-google-mobile-ads": {
-      "android_app_id": "ca-app-pub-3940256099942544~3347511713"
     }
   }
 }
