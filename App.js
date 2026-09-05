@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, SafeAreaView, StatusBar, TextInput, Modal, Image } from 'react-native';
-import * as ImagePicker from 'expo-image-picker'; // استيراد مكتبة اختيار الصور والكاميرا
+import * as ImagePicker from 'expo-image-picker';
 
-// القاموس اللغوي لدعم العربية، الفرنسية، والإنجليزية
 const translations = {
   ar: {
     appName: "PayPop",
@@ -29,6 +28,9 @@ const translations = {
     walletSubtitle: "اختر وسيلة السحب المناسبة بالضغط على المربع",
     profileSettings: "إعدادات التطبيق والحساب",
     appSettings: "إعدادات التطبيق",
+    darkMode: "الوضع الداكن",
+    myCountry: "البلد الخاص بي",
+    currency: "تغيير العملة",
     language: "اللغة (Language)",
     supportCenter: "مركز الدعم والمساعدة",
     logout: "تسجيل الخروج",
@@ -37,6 +39,7 @@ const translations = {
     walletNav: "المحفظة",
     profileNav: "حسابي",
     selectLangTitle: "اختر لغة التطبيق",
+    selectCurrencyTitle: "اختر العملة المفضلة",
     cancel: "إلغاء"
   },
   fr: {
@@ -64,6 +67,9 @@ const translations = {
     walletSubtitle: "Choisissez votre méthode de retrait en cliquant dessus",
     profileSettings: "Paramètres du compte",
     appSettings: "Paramètres de l'application",
+    darkMode: "Mode Sombre",
+    myCountry: "Mon Pays",
+    currency: "Changer la devise",
     language: "Langue (Language)",
     supportCenter: "Centre d'assistance",
     logout: "Se déconnecter",
@@ -72,6 +78,7 @@ const translations = {
     walletNav: "Portefeuille",
     profileNav: "Profil",
     selectLangTitle: "Choisir la langue de l'application",
+    selectCurrencyTitle: "Choisir la devise",
     cancel: "Annuler"
   },
   en: {
@@ -99,6 +106,9 @@ const translations = {
     walletSubtitle: "Choose your payout method by tapping the box",
     profileSettings: "App & Account Settings",
     appSettings: "App Settings",
+    darkMode: "Dark Mode",
+    myCountry: "My Country",
+    currency: "Change Currency",
     language: "Language",
     supportCenter: "Support Center",
     logout: "Log Out",
@@ -107,6 +117,7 @@ const translations = {
     walletNav: "Wallet",
     profileNav: "Profile",
     selectLangTitle: "Select App Language",
+    selectCurrencyTitle: "Select Currency",
     cancel: "Cancel"
   }
 };
@@ -117,16 +128,21 @@ export default function App() {
   const [points, setPoints] = useState(1405);
   const [userEmail, setUserEmail] = useState('');
   
-  // حالة اللغة (افتراضياً العربية 'ar')
+  // حالات الإعدادات الجديدة (الوضع الداكن، البلد، العملة)
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [currentCurrency, setCurrentCurrency] = useState('USD'); // USD, EUR, DZD, EGP
+  const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
+
+  // حالة اللغة
   const [currentLang, setCurrentLang] = useState('ar');
   const [langModalVisible, setLangModalVisible] = useState(false);
 
-  const t = translations[currentLang]; // كائن النصوص حسب اللغة الحالية
+  const t = translations[currentLang];
 
   // إعدادات عجلة الحظ
   const [spinCount, setSpinCount] = useState(0);
-  const [userAvatar, setUserAvatar] = useState('👤'); // تخزين الأيموجي أو مسار الصورة المحددة
-  const [isCustomImage, setIsCustomImage] = useState(false); // للتحقق هل الصورة مرفوعة أم أيموجي
+  const [userAvatar, setUserAvatar] = useState('👤');
+  const [isCustomImage, setIsCustomImage] = useState(false);
   const [referralModalVisible, setReferralModalVisible] = useState(false);
 
   const [selectedMethod, setSelectedMethod] = useState(null);
@@ -138,6 +154,17 @@ export default function App() {
   
   const referralCode = "PAYPOP-8849";
   const emojisList = ['😎', '🦊', '⚡', '🎮', '🦁'];
+
+  // حساب قيمة النقاط بناءً على العملة المختارة
+  const getConvertedValue = () => {
+    const usdVal = points / 1000;
+    switch (currentCurrency) {
+      case 'EUR': return `€${(usdVal * 0.92).toFixed(2)}`;
+      case 'DZD': return `${(usdVal * 134).toFixed(0)} د.ج`;
+      case 'EGP': return `${(usdVal * 48).toFixed(0)} ج.م`;
+      default: return `$${usdVal.toFixed(2)} USD`;
+    }
+  };
 
   const addPoints = (amount, source) => {
     setPoints(prev => prev + amount);
@@ -151,11 +178,8 @@ export default function App() {
 
     setTimeout(() => {
       let reward = 10;
-      if (spinCount === 0) {
-        reward = 25; 
-      } else {
-        reward = Math.random() < 0.5 ? 10 : 15;
-      }
+      if (spinCount === 0) reward = 25;
+      else reward = Math.random() < 0.5 ? 10 : 15;
 
       setPoints(prev => prev + reward);
       setSpinCount(prev => prev + 1);
@@ -166,23 +190,19 @@ export default function App() {
 
   const executeWithdraw = () => {
     if (!selectedMethod) return;
-
     if (points < selectedMethod.minPoints) {
       Alert.alert("الرصيد غير كافٍ", `الحد الأدنى للسحب عبر ${selectedMethod.name} هو ${selectedMethod.minPoints} نقطة.`);
       return;
     }
-
     if (!withdrawInput.trim()) {
       Alert.alert("خطأ", `يرجى إدخال ${selectedMethod.inputPlaceholder} بشكل صحيح.`);
       return;
     }
-
     Alert.alert("تم إرسال الطلب بنجاح", `سيتم تحويل الأرباح عبر (${selectedMethod.name}) إلى:\n\n${withdrawInput}\n\nخلال 24 ساعة.`);
     setWithdrawInput('');
     setSelectedMethod(null);
   };
 
-  // دالة طلب الإذن وفتح الكاميرا أو المعرض في الحقيقة
   const handleCameraAction = () => {
     Alert.alert(
       "تغيير صورة الحساب",
@@ -191,48 +211,25 @@ export default function App() {
         { 
           text: "التقاط بالكاميرا", 
           onPress: async () => {
-            // طلب إذن الكاميرا
             const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
             if (!permissionResult.granted) {
-              Alert.alert("إذن مرفوض", "يجب السماح بالتطبيق باستخدام الكاميرا لتغيير الصورة.");
+              Alert.alert("إذن مرفوض", "يجب السماح بالتطبيق باستخدام الكاميرا.");
               return;
             }
-
-            // فتح الكاميرا للتصوير
-            const result = await ImagePicker.launchCameraAsync({
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.8,
-            });
-
-            if (!result.canceled) {
-              setUserAvatar(result.assets[0].uri);
-              setIsCustomImage(true);
-            }
+            const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+            if (!result.canceled) { setUserAvatar(result.assets[0].uri); setIsCustomImage(true); }
           } 
         },
         { 
           text: "اختيار من المعرض", 
           onPress: async () => {
-            // طلب إذن المعرض
             const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (!permissionResult.granted) {
               Alert.alert("إذن مرفوض", "يجب السماح بالتطبيق بالوصول إلى معرض الصور.");
               return;
             }
-
-            // فتح معرض الصور
-            const result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.8,
-            });
-
-            if (!result.canceled) {
-              setUserAvatar(result.assets[0].uri);
-              setIsCustomImage(true);
-            }
+            const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+            if (!result.canceled) { setUserAvatar(result.assets[0].uri); setIsCustomImage(true); }
           } 
         },
         { text: "إلغاء", style: "cancel" }
@@ -256,30 +253,39 @@ export default function App() {
     { id: 'games', name: 'إلعب وأحصل على نقاط', icon: 'https://img.icons8.com/color/96/controller.png', desc: 'استمتع بالألعاب واجمع الأرباح', onPress: () => Alert.alert("قسم الألعاب", "قريباً!") }
   ];
 
-  // اتجاه الكتابة حسب اللغة (RTL للعربية، LTR للفرنسية والإنجليزية)
   const isRtl = currentLang === 'ar';
   const textDirectionStyle = { textAlign: isRtl ? 'right' : 'left' };
   const rowDirectionStyle = { flexDirection: isRtl ? 'row-reverse' : 'row' };
 
+  // ثيم الألوان حسب الوضع الداكن أو الفاتح
+  const themeStyles = {
+    container: { backgroundColor: isDarkMode ? '#0F172A' : '#F8FAFC' },
+    card: { backgroundColor: isDarkMode ? '#1E293B' : 'white' },
+    textColor: { color: isDarkMode ? '#F1F5F9' : '#1E293B' },
+    subTextColor: { color: isDarkMode ? '#94A3B8' : '#64748B' },
+    inputBg: { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', color: isDarkMode ? 'white' : 'black', borderColor: isDarkMode ? '#334155' : '#E2E8F0' },
+    navBg: { backgroundColor: isDarkMode ? '#1E293B' : 'white', borderTopColor: isDarkMode ? '#334155' : '#E2E8F0' },
+    modalBg: { backgroundColor: isDarkMode ? '#1E293B' : 'white' }
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, themeStyles.container]}>
       <StatusBar backgroundColor="#5849E2" barStyle="light-content" />
       
       {currentScreen !== 'splash' && currentScreen !== 'login' && (
         <View style={[styles.header, rowDirectionStyle]}>
           <Text style={styles.logo}>{t.appName}</Text>
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>{points} {t.points} (${(points/1000).toFixed(2)})</Text>
+            <Text style={styles.badgeText}>{points} {t.points} ({getConvertedValue()})</Text>
           </View>
         </View>
       )}
 
       {currentScreen === 'splash' && (
         <View style={styles.splashContainer}>
-          <View style={styles.splashCard}>
+          <View style={[styles.splashCard, themeStyles.card]}>
             <Text style={styles.splashTitle}>{t.appName}</Text>
-            <Text style={styles.splashDesc}>{t.splashDesc}</Text>
-            
+            <Text style={[styles.splashDesc, themeStyles.subTextColor]}>{t.splashDesc}</Text>
             <TouchableOpacity style={styles.splashBtn} onPress={() => setCurrentScreen('login')}>
               <Text style={styles.splashBtnText}>{t.startNow}</Text>
             </TouchableOpacity>
@@ -292,18 +298,16 @@ export default function App() {
           <View style={styles.logoBox}>
             <Text style={styles.appTitle}>{t.appName}</Text>
           </View>
-          <Text style={styles.subTitle}>
-            {isSignUp ? t.signUp : t.login}
-          </Text>
+          <Text style={[styles.subTitle, themeStyles.subTextColor]}>{isSignUp ? t.signUp : t.login}</Text>
 
           <TextInput 
-            style={[styles.input, textDirectionStyle]} 
+            style={[styles.input, themeStyles.inputBg, textDirectionStyle]} 
             placeholder={t.emailPlaceholder} 
             placeholderTextColor="#888"
             onChangeText={setUserEmail}
           />
           <TextInput 
-            style={[styles.input, textDirectionStyle]} 
+            style={[styles.input, themeStyles.inputBg, textDirectionStyle]} 
             placeholder={t.passPlaceholder} 
             secureTextEntry 
             placeholderTextColor="#888"
@@ -320,35 +324,33 @@ export default function App() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.switchAuthBtn} onPress={() => setIsSignUp(!isSignUp)}>
-            <Text style={styles.switchAuthText}>
-              {isSignUp ? t.hasAccount : t.noAccount}
-            </Text>
+            <Text style={styles.switchAuthText}>{isSignUp ? t.hasAccount : t.noAccount}</Text>
           </TouchableOpacity>
         </ScrollView>
       )}
 
       {currentScreen === 'home' && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.card}>
-            <Text style={[styles.cardTitle, textDirectionStyle]}>{t.dashboard}</Text>
+          <View style={[styles.card, themeStyles.card]}>
+            <Text style={[styles.cardTitle, themeStyles.textColor, textDirectionStyle]}>{t.dashboard}</Text>
             <Text style={styles.pointsText}>{points} {t.points}</Text>
-            <Text style={styles.subPoints}>{t.usdValue} ${(points/1000).toFixed(2)} USD</Text>
+            <Text style={styles.subPoints}>{t.usdValue} {getConvertedValue()}</Text>
           </View>
 
           <View style={[styles.statsRow, rowDirectionStyle]}>
-            <View style={styles.statBox}>
+            <View style={[styles.statBox, themeStyles.card]}>
               <Text style={styles.statNumber}>150</Text>
-              <Text style={styles.statLabel}>{t.todayEarned}</Text>
+              <Text style={[styles.statLabel, themeStyles.subTextColor]}>{t.todayEarned}</Text>
             </View>
-            <View style={styles.statBox}>
+            <View style={[styles.statBox, themeStyles.card]}>
               <Text style={styles.statNumber}>3</Text>
-              <Text style={styles.statLabel}>{t.invitedFriends}</Text>
+              <Text style={[styles.statLabel, themeStyles.subTextColor]}>{t.invitedFriends}</Text>
             </View>
           </View>
 
-          <View style={styles.card}>
-            <Text style={[styles.cardTitle, textDirectionStyle]}>{t.dailyChallenge}</Text>
-            <Text style={[styles.cardDesc, textDirectionStyle]}>{t.dailyDesc}</Text>
+          <View style={[styles.card, themeStyles.card]}>
+            <Text style={[styles.cardTitle, themeStyles.textColor, textDirectionStyle]}>{t.dailyChallenge}</Text>
+            <Text style={[styles.cardDesc, themeStyles.subTextColor, textDirectionStyle]}>{t.dailyDesc}</Text>
             <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#F59E0B'}]} onPress={() => addPoints(50, "هدية التحدي اليومي")}>
               <Text style={styles.btnText}>{t.claimDaily}</Text>
             </TouchableOpacity>
@@ -358,16 +360,16 @@ export default function App() {
 
       {currentScreen === 'earn' && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.mainCardContainer}>
-            <Text style={styles.walletMainTitle}>{t.earnTitle}</Text>
-            <Text style={styles.walletSubtitle}>{t.earnSubtitle}</Text>
+          <View style={[styles.mainCardContainer, themeStyles.card]}>
+            <Text style={[styles.walletMainTitle, themeStyles.textColor]}>{t.earnTitle}</Text>
+            <Text style={[styles.walletSubtitle, themeStyles.subTextColor]}>{t.earnSubtitle}</Text>
 
             <View style={[styles.gridContainer, rowDirectionStyle]}>
               {earnMethods.map((method) => (
-                <TouchableOpacity key={method.id} style={styles.gridItemBox} onPress={method.onPress}>
+                <TouchableOpacity key={method.id} style={[styles.gridItemBox, isDarkMode && {backgroundColor: '#0F172A', borderColor: '#334155'}]} onPress={method.onPress}>
                   <Image source={{ uri: method.icon }} style={styles.gridItemImage} />
-                  <Text style={styles.gridItemName}>{method.name}</Text>
-                  <Text style={styles.gridItemMin}>{method.desc}</Text>
+                  <Text style={[styles.gridItemName, themeStyles.textColor]}>{method.name}</Text>
+                  <Text style={[styles.gridItemMin, themeStyles.subTextColor]}>{method.desc}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -377,20 +379,20 @@ export default function App() {
 
       {currentScreen === 'wallet' && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.mainCardContainer}>
-            <Text style={styles.walletMainTitle}>{t.walletTitle}</Text>
-            <Text style={styles.walletSubtitle}>{t.walletSubtitle}</Text>
+          <View style={[styles.mainCardContainer, themeStyles.card]}>
+            <Text style={[styles.walletMainTitle, themeStyles.textColor]}>{t.walletTitle}</Text>
+            <Text style={[styles.walletSubtitle, themeStyles.subTextColor]}>{t.walletSubtitle}</Text>
 
             <View style={[styles.gridContainer, rowDirectionStyle]}>
               {withdrawalMethods.map((method) => (
                 <TouchableOpacity 
                   key={method.id}
-                  style={styles.gridItemBox}
+                  style={[styles.gridItemBox, isDarkMode && {backgroundColor: '#0F172A', borderColor: '#334155'}]}
                   onPress={() => { setSelectedMethod(method); setWithdrawInput(''); }}
                 >
                   <Image source={{ uri: method.icon }} style={styles.gridItemImage} />
-                  <Text style={styles.gridItemName}>{method.name}</Text>
-                  <Text style={styles.gridItemMin}>Min: {method.minPoints}</Text>
+                  <Text style={[styles.gridItemName, themeStyles.textColor]}>{method.name}</Text>
+                  <Text style={[styles.gridItemMin, themeStyles.subTextColor]}>Min: {method.minPoints}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -400,7 +402,7 @@ export default function App() {
 
       {currentScreen === 'profile' && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.profileHeaderCard}>
+          <View style={[styles.profileHeaderCard, themeStyles.card]}>
             <View style={styles.avatarContainer}>
               <View style={styles.avatarCircle}>
                 {isCustomImage ? (
@@ -414,41 +416,55 @@ export default function App() {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.profileName}>{userEmail ? userEmail.split('@')[0] : "Youssef Gamer"}</Text>
-            <Text style={styles.profileEmail}>{userEmail || "user@paypop.com"}</Text>
+            <Text style={[styles.profileName, themeStyles.textColor]}>{userEmail ? userEmail.split('@')[0] : "Youssef Gamer"}</Text>
+            <Text style={[styles.profileEmail, themeStyles.subTextColor]}>{userEmail || "user@paypop.com"}</Text>
 
             <View style={[styles.emojisRow, rowDirectionStyle]}>
               {emojisList.map((emo, index) => (
-                <TouchableOpacity key={index} style={styles.emojiOption} onPress={() => { setUserAvatar(emo); setIsCustomImage(false); }}>
+                <TouchableOpacity key={index} style={[styles.emojiOption, isDarkMode && {backgroundColor: '#0F172A', borderColor: '#334155'}]} onPress={() => { setUserAvatar(emo); setIsCustomImage(false); }}>
                   <Text style={styles.emojiItem}>{emo}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
 
-          <View style={styles.card}>
+          <View style={[styles.card, themeStyles.card]}>
             <TouchableOpacity style={styles.primaryBtn} onPress={() => setReferralModalVisible(true)}>
               <Text style={styles.btnText}>Referral System</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.card}>
-            <Text style={[styles.cardTitle, textDirectionStyle]}>{t.profileSettings}</Text>
+          {/* قسم إعدادات التطبيق المحدثة */}
+          <View style={[styles.card, themeStyles.card]}>
+            <Text style={[styles.cardTitle, themeStyles.textColor, textDirectionStyle]}>{t.profileSettings}</Text>
             
-            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => Alert.alert("Info", "Coming soon")}>
+            {/* زر تغيير الوضع لداكن */}
+            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => setIsDarkMode(!isDarkMode)}>
               <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
-              <Text style={styles.menuText}>{t.appSettings}</Text>
+              <Text style={[styles.menuText, themeStyles.textColor]}>{t.darkMode} ({isDarkMode ? 'ON 🌙' : 'OFF ☀️'})</Text>
             </TouchableOpacity>
 
-            {/* زر فتح قائمة اختيار اللغة */}
+            {/* زر معرفة البلد */}
+            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => Alert.alert(t.myCountry, "الجزائر (Algeria) 🇩🇿 - الموقع الحالي مضبوط بنجاح.")}>
+              <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
+              <Text style={[styles.menuText, themeStyles.textColor]}>{t.myCountry}: الجزائر 🇩🇿</Text>
+            </TouchableOpacity>
+
+            {/* زر تغيير العملة */}
+            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => setCurrencyModalVisible(true)}>
+              <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
+              <Text style={[styles.menuText, themeStyles.textColor]}>{t.currency} ({currentCurrency})</Text>
+            </TouchableOpacity>
+
+            {/* زر تغيير اللغة */}
             <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => setLangModalVisible(true)}>
               <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
-              <Text style={styles.menuText}>{t.language} ({currentLang.toUpperCase()})</Text>
+              <Text style={[styles.menuText, themeStyles.textColor]}>{t.language} ({currentLang.toUpperCase()})</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => Alert.alert("Support", "Contact us.")}>
               <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
-              <Text style={styles.menuText}>{t.supportCenter}</Text>
+              <Text style={[styles.menuText, themeStyles.textColor]}>{t.supportCenter}</Text>
             </TouchableOpacity>
           </View>
 
@@ -458,11 +474,34 @@ export default function App() {
         </ScrollView>
       )}
 
+      {/* نافذة اختيار العملة */}
+      <Modal animationType="slide" transparent={true} visible={currencyModalVisible} onRequestClose={() => setCurrencyModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, themeStyles.modalBg]}>
+            <Text style={[styles.modalTitle, themeStyles.textColor]}>{t.selectCurrencyTitle}</Text>
+            
+            {['USD', 'EUR', 'DZD', 'EGP'].map((curr) => (
+              <TouchableOpacity 
+                key={curr} 
+                style={[styles.primaryBtn, {backgroundColor: currentCurrency === curr ? '#10B981' : '#5849E2', marginTop: 10}]} 
+                onPress={() => { setCurrentCurrency(curr); setCurrencyModalVisible(false); }}
+              >
+                <Text style={styles.btnText}>{curr === 'USD' ? 'دولار أمريكي (USD $)' : curr === 'EUR' ? 'أورو (EUR €)' : curr === 'DZD' ? 'دينار جزائري (DZD د.ج)' : 'جنيه مصري (EGP ج.م)'}</Text>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#94A3B8', marginTop: 15}]} onPress={() => setCurrencyModalVisible(false)}>
+              <Text style={styles.btnText}>{t.cancel}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* نافذة اختيار اللغة */}
       <Modal animationType="slide" transparent={true} visible={langModalVisible} onRequestClose={() => setLangModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t.selectLangTitle}</Text>
+          <View style={[styles.modalContent, themeStyles.modalBg]}>
+            <Text style={[styles.modalTitle, themeStyles.textColor]}>{t.selectLangTitle}</Text>
             
             <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: currentLang === 'ar' ? '#10B981' : '#5849E2', marginTop: 10}]} onPress={() => { setCurrentLang('ar'); setLangModalVisible(false); }}>
               <Text style={styles.btnText}>العربية (Arabic)</Text>
@@ -486,9 +525,9 @@ export default function App() {
       {/* نافذة عجلة الحظ */}
       <Modal animationType="slide" transparent={true} visible={wheelModalVisible} onRequestClose={() => setWheelModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>🎡 عجلة الحظ اليومية</Text>
-            <View style={styles.wheelBox}>
+          <View style={[styles.modalContent, themeStyles.modalBg]}>
+            <Text style={[styles.modalTitle, themeStyles.textColor]}>🎡 عجلة الحظ اليومية</Text>
+            <View style={[styles.wheelBox, isDarkMode && {backgroundColor: '#0F172A', borderColor: '#334155'}]}>
               <Image source={{ uri: 'https://img.icons8.com/color/96/luck.png' }} style={{ width: 60, height: 60, marginBottom: 10 }} />
               <Text style={styles.wheelResultText}>{wheelRewardText}</Text>
             </View>
@@ -505,14 +544,14 @@ export default function App() {
       {/* نافذة السحب */}
       <Modal animationType="slide" transparent={true} visible={selectedMethod !== null} onRequestClose={() => setSelectedMethod(null)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, themeStyles.modalBg]}>
             {selectedMethod && (
               <>
                 <View style={{ alignItems: 'center', marginBottom: 10 }}>
                   <Image source={{ uri: selectedMethod.icon }} style={{ width: 50, height: 50, marginBottom: 5 }} />
-                  <Text style={styles.modalTitle}>{selectedMethod.name}</Text>
+                  <Text style={[styles.modalTitle, themeStyles.textColor]}>{selectedMethod.name}</Text>
                 </View>
-                <TextInput style={[styles.modalInput, textDirectionStyle]} placeholder={selectedMethod.inputPlaceholder} placeholderTextColor="#888" keyboardType={selectedMethod.keyboardType} value={withdrawInput} onChangeText={setWithdrawInput} />
+                <TextInput style={[styles.modalInput, themeStyles.inputBg, textDirectionStyle]} placeholder={selectedMethod.inputPlaceholder} placeholderTextColor="#888" keyboardType={selectedMethod.keyboardType} value={withdrawInput} onChangeText={setWithdrawInput} />
                 <TouchableOpacity style={styles.primaryBtn} onPress={executeWithdraw}><Text style={styles.btnText}>تأكيد طلب السحب</Text></TouchableOpacity>
                 <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#94A3B8', marginTop: 10}]} onPress={() => setSelectedMethod(null)}><Text style={styles.btnText}>إلغاء</Text></TouchableOpacity>
               </>
@@ -524,8 +563,8 @@ export default function App() {
       {/* نافذة الإحالة */}
       <Modal animationType="slide" transparent={true} visible={referralModalVisible} onRequestClose={() => setReferralModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.cardTitle}>دعوة الأصدقاء</Text>
+          <View style={[styles.modalContent, themeStyles.modalBg]}>
+            <Text style={[styles.cardTitle, themeStyles.textColor]}>دعوة الأصدقاء</Text>
             <Text style={styles.refCode}>{referralCode}</Text>
             <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#10B981', marginTop: 15}]} onPress={() => { Alert.alert("تم", "تم النسخ!"); setReferralModalVisible(false); }}><Text style={styles.btnText}>نسخ الكود</Text></TouchableOpacity>
             <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#EF4444', marginTop: 10}]} onPress={() => setReferralModalVisible(false)}><Text style={styles.btnText}>إغلاق</Text></TouchableOpacity>
@@ -534,18 +573,18 @@ export default function App() {
       </Modal>
 
       {currentScreen !== 'splash' && currentScreen !== 'login' && (
-        <View style={[styles.bottomNav, rowDirectionStyle]}>
+        <View style={[styles.bottomNav, themeStyles.navBg, rowDirectionStyle]}>
           <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentScreen('home')}>
-            <Text style={[styles.navText, currentScreen === 'home' && styles.activeNav]}>{t.homeNav}</Text>
+            <Text style={[styles.navText, themeStyles.subTextColor, currentScreen === 'home' && styles.activeNav]}>{t.homeNav}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentScreen('earn')}>
-            <Text style={[styles.navText, currentScreen === 'earn' && styles.activeNav]}>{t.earnNav}</Text>
+            <Text style={[styles.navText, themeStyles.subTextColor, currentScreen === 'earn' && styles.activeNav]}>{t.earnNav}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentScreen('wallet')}>
-            <Text style={[styles.navText, currentScreen === 'wallet' && styles.activeNav]}>{t.walletNav}</Text>
+            <Text style={[styles.navText, themeStyles.subTextColor, currentScreen === 'wallet' && styles.activeNav]}>{t.walletNav}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentScreen('profile')}>
-            <Text style={[styles.navText, currentScreen === 'profile' && styles.activeNav]}>{t.profileNav}</Text>
+            <Text style={[styles.navText, themeStyles.subTextColor, currentScreen === 'profile' && styles.activeNav]}>{t.profileNav}</Text>
           </TouchableOpacity>
         </View>
       )}
