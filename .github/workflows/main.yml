@@ -17,5 +17,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Android APK
-        run: npx eas-cli build -p android --profile preview --non-interactive
+      - name: Prebuild Android project
+        run: npx expo prebuild --platform android
+
+      - name: Build Android Release APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: PayPop-App
+          path: android/app/build/outputs/apk/release/*.apk
