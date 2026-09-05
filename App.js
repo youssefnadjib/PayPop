@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, SafeAreaVi
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('login');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [points, setPoints] = useState(1250);
   const [userEmail, setUserEmail] = useState('');
   const [spinCooldown, setSpinCooldown] = useState(false);
@@ -50,9 +51,15 @@ export default function App() {
       )}
 
       {currentScreen === 'login' && (
-        <View style={styles.authContainer}>
-          <Text style={styles.appTitle}>PayPop 🎁</Text>
-          <Text style={styles.subTitle}>سجل دخولك وابدأ جمع الأرباح</Text>
+        <ScrollView contentContainerStyle={styles.authContainer}>
+          <View style={styles.logoBox}>
+            <Text style={styles.authGiftIcon}>🎁</Text>
+            <Text style={styles.appTitle}>PayPop</Text>
+          </View>
+          <Text style={styles.subTitle}>
+            {isSignUp ? "أنشئ حساباً جديداً وابدأ الربح" : "سجل دخولك وابدأ جمع الأرباح"}
+          </Text>
+
           <TextInput 
             style={styles.input} 
             placeholder="البريد الإلكتروني" 
@@ -65,10 +72,37 @@ export default function App() {
             secureTextEntry 
             placeholderTextColor="#888"
           />
+
+          {!isSignUp && (
+            <TouchableOpacity style={styles.forgotBtn} onPress={() => Alert.alert("استعادة كلمة السر", "تم إرسال رابط الاستعادة إلى بريدك.")}>
+              <Text style={styles.forgotText}>نسيت كلمة السر؟</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity style={styles.primaryBtn} onPress={() => setCurrentScreen('home')}>
-            <Text style={styles.btnText}>تسجيل الدخول</Text>
+            <Text style={styles.btnText}>{isSignUp ? "إنشاء الحساب" : "تسجيل الدخول"}</Text>
           </TouchableOpacity>
-        </View>
+
+          <View style={styles.dividerContainer}>
+            <View style={styles.line} />
+            <Text style={styles.orText}>أو المتابعة عبر</Text>
+            <View style={styles.line} />
+          </View>
+
+          <TouchableOpacity style={styles.googleBtn} onPress={() => setCurrentScreen('home')}>
+            <Text style={styles.googleBtnText}>🌐 المتابعة باستخدام Google</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.facebookBtn} onPress={() => setCurrentScreen('home')}>
+            <Text style={styles.facebookBtnText}>📘 المتابعة باستخدام Facebook</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.switchAuthBtn} onPress={() => setIsSignUp(!isSignUp)}>
+            <Text style={styles.switchAuthText}>
+              {isSignUp ? "لديك حساب بالفعل؟ تسجيل الدخول" : "ليس لديك حساب؟ إنشاء حساب جديد"}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
       )}
 
       {currentScreen === 'home' && (
@@ -166,7 +200,9 @@ const styles = StyleSheet.create({
   logo: { color: 'white', fontSize: 22, fontWeight: 'bold' },
   badge: { backgroundColor: '#5A4BCF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   badgeText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
-  authContainer: { flex: 1, justifyContent: 'center', padding: 20 },
+  authContainer: { flexGrow: 1, justifyContent: 'center', padding: 20 },
+  logoBox: { flexDirection: 'row-reverse', justifyContent: 'center', alignItems: 'center', marginBottom: 5 },
+  authGiftIcon: { fontSize: 32, marginLeft: 8 },
   appTitle: { fontSize: 36, fontWeight: 'bold', color: '#6C5CE7', textAlign: 'center' },
   subTitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 },
   content: { padding: 15 },
@@ -175,9 +211,20 @@ const styles = StyleSheet.create({
   cardDesc: { color: '#64748B', fontSize: 13, textAlign: 'right', marginBottom: 10 },
   pointsText: { fontSize: 32, fontWeight: 'bold', color: '#6C5CE7', textAlign: 'center', marginVertical: 8 },
   subPoints: { textAlign: 'center', color: '#94A3B8', fontSize: 12 },
-  primaryBtn: { backgroundColor: '#6C5CE7', padding: 12, borderRadius: 8, alignItems: 'center' },
+  primaryBtn: { backgroundColor: '#6C5CE7', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 5 },
   btnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
   input: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 12, marginBottom: 12, textAlign: 'right', fontSize: 14 },
+  forgotBtn: { alignSelf: 'flex-start', marginBottom: 15 },
+  forgotText: { color: '#6C5CE7', fontSize: 13 },
+  dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 15 },
+  line: { flex: 1, height: 1, backgroundColor: '#E2E8F0' },
+  orText: { marginHorizontal: 10, color: '#888', fontSize: 12 },
+  googleBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#CBD5E1', padding: 12, borderRadius: 8, alignItems: 'center', marginBottom: 10 },
+  googleBtnText: { color: '#1E293B', fontWeight: 'bold', fontSize: 14 },
+  facebookBtn: { backgroundColor: '#1877F2', padding: 12, borderRadius: 8, alignItems: 'center', marginBottom: 15 },
+  facebookBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
+  switchAuthBtn: { alignItems: 'center', marginTop: 10 },
+  switchAuthText: { color: '#6C5CE7', fontSize: 14, fontWeight: 'bold' },
   refCode: { fontSize: 18, fontWeight: 'bold', color: '#6C5CE7', textAlign: 'center', backgroundColor: '#F1F5F9', padding: 10, borderRadius: 8, letterSpacing: 2 },
   profileText: { fontSize: 14, color: '#334155', marginVertical: 4, textAlign: 'right' },
   bottomNav: { flexDirection: 'row-reverse', backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E2E8F0', height: 60 },
