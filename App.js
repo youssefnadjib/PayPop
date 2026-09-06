@@ -1,736 +1,2360 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, SafeAreaView, StatusBar, TextInput, Modal, Image, Linking } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  SafeAreaView,
+  StatusBar,
+  TextInput,
+  Modal,
+  Image,
+  Linking
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Wheel, { WheelLogo } from './Wheel';
+
+const WHEEL_COOLDOWN = 24 * 60 * 60 * 1000;
 
 const translations = {
   ar: {
-    appName: "PayPop",
-    splashDesc: "طريقتك الأذكية لجمع الأرباح، شدات الألعاب، وسحب العملات الرقمية بكل سهولة.",
-    startNow: "ابدأ التعدين الآن",
-    emailPlaceholder: "البريد الإلكتروني",
-    passPlaceholder: "كلمة السر",
-    forgotPass: "نسيت كلمة السر؟",
-    login: "تسجيل الدخول",
-    signUp: "إنشاء الحساب",
-    hasAccount: "لديك حساب بالفعل؟ تسجيل الدخول",
-    noAccount: "ليس لديك حساب؟ إنشاء حساب جديد",
-    dashboard: "محفظة توكنات PayPop",
-    points: "رصيد PPT",
-    usdValue: "القيمة السوقية التقديرية",
-    todayEarned: "ما تم تعدينه اليوم",
-    invitedFriends: "المعدنون المدعوون",
-    dailyChallenge: "التعدين اليومي للتوكنات",
-    dailyDesc: "سجل حضورك اليومي واحصل على مكافأة فورية من عملات (+50 PPT)",
-    claimDaily: "استلام مكافأة التوكن",
-    earnTitle: "⚡ مركز تعدين وجمع توكنات PPT",
-    earnSubtitle: "اختر طريقة التعدين واحصل على توكنات فريدة ومميزة",
-    walletTitle: "💳 سحب وصرف التوكنات",
-    walletSubtitle: "اختر طريقة التحويل أو السحب المفضلة لديك",
-    profileSettings: "إعدادات الحساب والتوكن",
-    appSettings: "إعدادات التطبيق",
-    darkMode: "الوضع الداكن",
-    myCountry: "البلد الخاص بي",
-    currency: "تغيير العملة",
-    language: "اللغة (Language)",
-    supportCenter: "مركز الدعم والمساعدة",
-    logout: "تسجيل الخروج",
-    homeNav: "الرئيسية",
-    earnNav: "التعدين",
-    walletNav: "المحفظة",
-    profileNav: "حسابي",
-    selectLangTitle: "اختر لغة التطبيق",
-    selectCurrencyTitle: "اختر العملة المفضلة",
-    cancel: "إلغاء"
+    appName: 'PayPop',
+    splashDesc: 'طريقتك الأذكى لجمع الأرباح، شدات الألعاب، وسحب العملات الرقمية بكل سهولة.',
+    startNow: 'ابدأ التعدين الآن',
+    emailPlaceholder: 'البريد الإلكتروني',
+    passPlaceholder: 'كلمة السر',
+    forgotPass: 'نسيت كلمة السر؟',
+    login: 'تسجيل الدخول',
+    signUp: 'إنشاء الحساب',
+    hasAccount: 'لديك حساب بالفعل؟ تسجيل الدخول',
+    noAccount: 'ليس لديك حساب؟ إنشاء حساب جديد',
+    dashboard: 'محفظة توكنات PayPop',
+    points: 'رصيد PPT',
+    usdValue: 'القيمة السوقية التقديرية',
+    todayEarned: 'ما تم تعدينه اليوم',
+    invitedFriends: 'المعدنون المدعوون',
+    dailyChallenge: 'التعدين اليومي للتوكنات',
+    dailyDesc: 'سجل حضورك اليومي واحصل على مكافأة فورية (+50 PPT)',
+    claimDaily: 'استلام مكافأة التوكن',
+    earnTitle: '⚡ مركز تعدين وجمع توكنات PPT',
+    earnSubtitle: 'اختر طريقة التعدين واحصل على توكنات فريدة ومميزة',
+    walletTitle: '💳 سحب وصرف التوكنات',
+    walletSubtitle: 'اختر طريقة التحويل أو السحب المفضلة لديك',
+    profileSettings: 'إعدادات الحساب والتوكن',
+    darkMode: 'الوضع الداكن',
+    myCountry: 'البلد الخاص بي',
+    currency: 'تغيير العملة',
+    language: 'اللغة',
+    supportCenter: 'مركز الدعم والمساعدة',
+    logout: 'تسجيل الخروج',
+    homeNav: 'الرئيسية',
+    earnNav: 'التعدين',
+    walletNav: 'المحفظة',
+    profileNav: 'حسابي',
+    selectLangTitle: 'اختر لغة التطبيق',
+    selectCurrencyTitle: 'اختر العملة المفضلة',
+    cancel: 'إلغاء'
   },
+
   fr: {
-    appName: "PayPop",
-    splashDesc: "Votre moyen le plus intelligent de gagner des profits, des UC et des tokens exclusifs.",
-    startNow: "Commencer le minage",
-    emailPlaceholder: "E-mail",
-    passPlaceholder: "Mot de passe",
-    forgotPass: "Mot de passe oublié ?",
-    login: "Se connecter",
-    signUp: "Créer un compte",
-    hasAccount: "Vous avez déjà un compte ? Connexion",
-    noAccount: "Pas de compte ? Créer un compte",
-    dashboard: "Portefeuille Token PayPop",
-    points: "Tokens PPT",
-    usdValue: "Valeur estimée",
+    appName: 'PayPop',
+    splashDesc: 'Votre moyen le plus intelligent de gagner des profits et des tokens.',
+    startNow: 'Commencer le minage',
+    emailPlaceholder: 'E-mail',
+    passPlaceholder: 'Mot de passe',
+    forgotPass: 'Mot de passe oublié ?',
+    login: 'Se connecter',
+    signUp: 'Créer un compte',
+    hasAccount: 'Vous avez déjà un compte ? Connexion',
+    noAccount: 'Pas de compte ? Créer un compte',
+    dashboard: 'Portefeuille Token PayPop',
+    points: 'Tokens PPT',
+    usdValue: 'Valeur estimée',
     todayEarned: "Miné aujourd'hui",
-    invitedFriends: "Amis mineurs",
-    dailyChallenge: "Minage Quotidien",
-    dailyDesc: "Réclamez votre récompense quotidienne en tokens (+50 PPT)",
-    claimDaily: "Réclamer les tokens",
-    earnTitle: "⚡ Centre de Minage PPT",
-    earnSubtitle: "Choisissez une méthode et gagnez des tokens instantanément",
-    walletTitle: "💳 Retrait des Tokens PPT",
-    walletSubtitle: "Choisissez votre méthode de retrait",
-    profileSettings: "Paramètres du compte",
-    appSettings: "Paramètres de l'application",
-    darkMode: "Mode Sombre",
-    myCountry: "Mon Pays",
-    currency: "Changer la devise",
-    language: "Langue (Language)",
-    supportCenter: "Centre d'assistance",
-    logout: "Se déconnecter",
-    homeNav: "Accueil",
-    earnNav: "Miner",
-    walletNav: "Portefeuille",
-    profileNav: "Profil",
+    invitedFriends: 'Amis mineurs',
+    dailyChallenge: 'Minage Quotidien',
+    dailyDesc: 'Réclamez votre récompense quotidienne (+50 PPT)',
+    claimDaily: 'Réclamer les tokens',
+    earnTitle: '⚡ Centre de Minage PPT',
+    earnSubtitle: 'Choisissez une méthode et gagnez des tokens',
+    walletTitle: '💳 Retrait des Tokens PPT',
+    walletSubtitle: 'Choisissez votre méthode de retrait',
+    profileSettings: 'Paramètres du compte',
+    darkMode: 'Mode Sombre',
+    myCountry: 'Mon Pays',
+    currency: 'Changer la devise',
+    language: 'Langue',
+    supportCenter: 'Centre assistance',
+    logout: 'Se déconnecter',
+    homeNav: 'Accueil',
+    earnNav: 'Miner',
+    walletNav: 'Portefeuille',
+    profileNav: 'Profil',
     selectLangTitle: "Choisir la langue de l'application",
-    selectCurrencyTitle: "Choisir la devise",
-    cancel: "Annuler"
+    selectCurrencyTitle: 'Choisir la devise',
+    cancel: 'Annuler'
   },
+
   en: {
-    appName: "PayPop",
-    splashDesc: "Your smartest way to collect profits and unique ecosystem tokens.",
-    startNow: "Start Mining",
-    emailPlaceholder: "Email",
-    passPlaceholder: "Password",
-    forgotPass: "Forgot Password?",
-    login: "Log In",
-    signUp: "Sign Up",
-    hasAccount: "Already have an account? Log In",
+    appName: 'PayPop',
+    splashDesc: 'Your smartest way to collect profits and unique ecosystem tokens.',
+    startNow: 'Start Mining',
+    emailPlaceholder: 'Email',
+    passPlaceholder: 'Password',
+    forgotPass: 'Forgot Password?',
+    login: 'Log In',
+    signUp: 'Sign Up',
+    hasAccount: 'Already have an account? Log In',
     noAccount: "Don't have an account? Sign Up",
-    dashboard: "PayPop Token Wallet",
-    points: "PPT Balance",
-    usdValue: "Market Value",
-    todayEarned: "Mined Today",
-    invitedFriends: "Invited Miners",
-    dailyChallenge: "Daily Token Mining",
-    dailyDesc: "Claim your daily ecosystem token reward (+50 PPT)",
-    claimDaily: "Claim Token Reward",
-    earnTitle: "⚡ PPT Token Mining Center",
-    earnSubtitle: "Choose a method and earn exclusive PayPop tokens",
-    walletTitle: "💳 Token Payout",
-    walletSubtitle: "Choose your payout method",
-    profileSettings: "App & Account Settings",
-    appSettings: "App Settings",
-    darkMode: "Dark Mode",
-    myCountry: "My Country",
-    currency: "Change Currency",
-    language: "Language",
-    supportCenter: "Support Center",
-    logout: "Log Out",
-    homeNav: "Home",
-    earnNav: "Mine",
-    walletNav: "Wallet",
-    profileNav: "Profile",
-    selectLangTitle: "Select App Language",
-    selectCurrencyTitle: "Select Currency",
-    cancel: "Cancel"
+    dashboard: 'PayPop Token Wallet',
+    points: 'PPT Balance',
+    usdValue: 'Market Value',
+    todayEarned: 'Mined Today',
+    invitedMiners: 'Invited Miners',
+    dailyChallenge: 'Daily Token Mining',
+    dailyDesc: 'Claim your daily token reward (+50 PPT)',
+    claimDaily: 'Claim Token Reward',
+    earnTitle: '⚡ PPT Token Mining Center',
+    earnSubtitle: 'Choose a method and earn exclusive PayPop tokens',
+    walletTitle: '💳 Token Payout',
+    walletSubtitle: 'Choose your payout method',
+    profileSettings: 'Account Settings',
+    darkMode: 'Dark Mode',
+    myCountry: 'My Country',
+    currency: 'Change Currency',
+    language: 'Language',
+    supportCenter: 'Support Center',
+    logout: 'Log Out',
+    homeNav: 'Home',
+    earnNav: 'Mine',
+    walletNav: 'Wallet',
+    profileNav: 'Profile',
+    selectLangTitle: 'Select App Language',
+    selectCurrencyTitle: 'Select Currency',
+    cancel: 'Cancel'
   }
 };
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState('splash');
+    const [currentScreen, setCurrentScreen] = useState('splash');
   const [isSignUp, setIsSignUp] = useState(false);
+
   const [points, setPoints] = useState(1405);
   const [userEmail, setUserEmail] = useState('');
-  
+  const [password, setPassword] = useState('');
+
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [currentCurrency, setCurrentCurrency] = useState('USD'); 
+  const [currentCurrency, setCurrentCurrency] = useState('USD');
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
 
   const [currentLang, setCurrentLang] = useState('ar');
   const [langModalVisible, setLangModalVisible] = useState(false);
 
-  const t = translations[currentLang];
-
-  const [spinCount, setSpinCount] = useState(0);
   const [userAvatar, setUserAvatar] = useState('👤');
   const [isCustomImage, setIsCustomImage] = useState(false);
-  const [referralModalVisible, setReferralModalVisible] = useState(false);
 
+  const [referralModalVisible, setReferralModalVisible] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [withdrawInput, setWithdrawInput] = useState('');
 
+  // عجلة توكنات الحظ
+  const [spinCount, setSpinCount] = useState(0);
   const [wheelModalVisible, setWheelModalVisible] = useState(false);
-  const [wheelRewardText, setWheelRewardText] = useState('اضغط لتدوير عجلة التوكنات واكتشاف نصيبك من PPT!');
-  const [isSpinning, setIsSpinning] = useState(false);
-  
-  const referralCode = "PAYPOP-8849";
+  const [wheelRewardText, setWheelRewardText] = useState(
+    'اضغط على «أدر العجلة» وجرّب حظك 🎡'
+  );
+
+  const [wheelCooldown, setWheelCooldown] = useState(0);
+  const [adSpins, setAdSpins] = useState(0);
+  const [adCooldown, setAdCooldown] = useState(0);
+
+  const referralCode = 'PAYPOP-8849';
+
   const emojisList = ['😎', '🦊', '⚡', '🎮', '🦁'];
 
-  // دالة فتح واتساب مباشرة برقمك الحقيقي
-  const openWhatsAppSupport = () => {
-    const phoneNumber = "213667814377"; // الرقم بدون علامة +
-    const message = encodeURIComponent("مرحباً، أواجه مشكلة أو استفسار بخصوص تطبيق PayPop.");
-    const url = `https://wa.me/${phoneNumber}?text=${message}`;
+  const t = translations[currentLang];
 
-    Linking.canOpenURL(url)
-      .then((supported) => {
-        if (supported) {
-          Linking.openURL(url);
-        } else {
-          Alert.alert("خطأ", "لا يمكن فتح تطبيق واتساب حالياً.");
-        }
-      })
-      .catch((err) => console.error("An error occurred", err));
+  const lastDailyKey = 'paypop_wheel_last_daily';
+  const adSpinsKey = 'paypop_wheel_ad_spins';
+  const lastAdGrantKey = 'paypop_wheel_last_ad_grant';
+  const spinCountKey = 'paypop_wheel_spin_count';
+
+  const dailyAvailable = wheelCooldown <= 0;
+  const wheelCanSpin = dailyAvailable || adSpins > 0;
+    const formatWheelTime = (milliseconds) => {
+    if (milliseconds <= 0) return 'متاح الآن';
+
+    const totalSeconds = Math.ceil(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${hours}س ${minutes}د ${seconds}ث`;
   };
 
-  const getConvertedValue = () => {
-    const usdVal = points / 1000;
-    switch (currentCurrency) {
-      case 'EUR': return `€${(usdVal * 0.92).toFixed(2)}`;
-      case 'DZD': return `${(usdVal * 134).toFixed(0)} د.ج`;
-      case 'EGP': return `${(usdVal * 48).toFixed(0)} ج.م`;
-      default: return `$${usdVal.toFixed(2)} USD`;
-    }
-  };
+  useEffect(() => {
+    const loadWheelData = async () => {
+      try {
+        const values = await AsyncStorage.multiGet([
+          lastDailyKey,
+          adSpinsKey,
+          lastAdGrantKey,
+          spinCountKey
+        ]);
 
-  const addPoints = (amount, source) => {
-    setPoints(prev => prev + amount);
-    Alert.alert("عمليات التعدين ناجحة!", `تم إضافة +${amount} من توكنات PPT بنجاح من (${source}) 💎`);
-  };
+        const data = Object.fromEntries(values);
 
-  const spinWheelAction = () => {
-    if (isSpinning) return;
-    setIsSpinning(true);
-    setWheelRewardText('جاري سحب التوكنات العشوائية عبر عجلة PayPop...');
+        const lastDaily = Number(data[lastDailyKey] || 0);
+        const savedAdSpins = Number(data[adSpinsKey] || 0);
+        const lastAdGrant = Number(data[lastAdGrantKey] || 0);
+        const savedSpinCount = Number(data[spinCountKey] || 0);
 
-    setTimeout(() => {
-      let reward = 10;
-      if (spinCount === 0) reward = 25;
-      else reward = Math.random() < 0.5 ? 10 : 15;
+        const now = Date.now();
 
-      setPoints(prev => prev + reward);
-      setSpinCount(prev => prev + 1);
-      setWheelRewardText(`كفو! ربحت ${reward} توكن PPT جديد 🎉`);
-      setIsSpinning(false);
-    }, 1500);
-  };
+        setWheelCooldown(
+          lastDaily > 0
+            ? Math.max(0, WHEEL_COOLDOWN - (now - lastDaily))
+            : 0
+        );
 
-  const executeWithdraw = () => {
-    if (!selectedMethod) return;
-    if (points < selectedMethod.minPoints) {
-      Alert.alert("رصيد توكنات PPT غير كافٍ", `الحد الأدنى للسحب عبر ${selectedMethod.name} هو ${selectedMethod.minPoints} PPT.`);
-      return;
-    }
-    if (!withdrawInput.trim()) {
-      Alert.alert("خطأ في البيانات", `يرجى إدخال ${selectedMethod.inputPlaceholder} بشكل صحيح.`);
-      return;
-    }
-    Alert.alert("تم إرسال طلب صرف التوكنات", `سيتم تحويل أرباحك من عملات (${selectedMethod.name}) إلى:\n\n${withdrawInput}\n\nخلال 24 ساعة القادمة.`);
-    setWithdrawInput('');
-    setSelectedMethod(null);
-  };
+        setAdCooldown(
+          lastAdGrant > 0
+            ? Math.max(0, WHEEL_COOLDOWN - (now - lastAdGrant))
+            : 0
+        );
 
-  const handleCameraAction = () => {
+        setAdSpins(savedAdSpins);
+        setSpinCount(savedSpinCount);
+      } catch (error) {
+        console.log('Wheel data error:', error);
+      }
+    };
+
+    loadWheelData();
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setWheelCooldown(prev => Math.max(0, prev - 1000));
+      setAdCooldown(prev => Math.max(0, prev - 1000));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+    const claimDailyReward = () => {
+    setPoints(prev => prev + 50);
+
     Alert.alert(
-      "تغيير صورة الحساب",
-      "اختر طريقة تغيير الصورة:",
-      [
-        { 
-          text: "التقاط بالكاميرا", 
-          onPress: async () => {
-            const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-            if (!permissionResult.granted) {
-              Alert.alert("إذن مرفوض", "يجب السماح بالتطبيق باستخدام الكاميرا.");
-              return;
-            }
-            const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.8 });
-            if (!result.canceled) { setUserAvatar(result.assets[0].uri); setIsCustomImage(true); }
-          } 
-        },
-        { 
-          text: "اختيار من المعرض", 
-          onPress: async () => {
-            const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (!permissionResult.granted) {
-              Alert.alert("إذن مرفوض", "يجب السماح بالتطبيق بالوصول إلى معرض الصور.");
-              return;
-            }
-            const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.8 });
-            if (!result.canceled) { setUserAvatar(result.assets[0].uri); setIsCustomImage(true); }
-          } 
-        },
-        { text: "إلغاء", style: "cancel" }
-      ]
+      '🎉 مبروك!',
+      'حصلت على +50 PPT من التعدين اليومي.'
     );
   };
 
-  const withdrawalMethods = [
-    { id: 'baridimob', name: 'بريدي موب', icon: 'https://i.ibb.co/68v87gW/baridimob.png', minPoints: 5000, inputPlaceholder: 'رقم RIP أو الحساب البريدي', keyboardType: 'numeric' },
-    { id: 'redotpay', name: 'RedotPay', icon: 'https://i.ibb.co/3s682Xh/redotpay.png', minPoints: 5000, inputPlaceholder: 'البريد الإلكتروني أو ID', keyboardType: 'default' },
-    { id: 'paypal', name: 'بايبال PayPal', icon: 'https://img.icons8.com/color/96/paypal.png', minPoints: 3000, inputPlaceholder: 'البريد الإلكتروني (Email)', keyboardType: 'email-address' },
-    { id: 'binance', name: 'بايننس Binance', icon: 'https://i.ibb.co/9v0F90V/binance.png', minPoints: 2000, inputPlaceholder: 'Binance ID أو USDT (BEP20)', keyboardType: 'default' },
-    { id: 'freefire', name: 'فري فاير Free Fire', icon: 'https://img.icons8.com/color/96/sword.png', minPoints: 1500, inputPlaceholder: 'معرف اللاعب (Player ID)', keyboardType: 'numeric' },
-    { id: 'pubg', name: 'ببجي موبايل PUBG', icon: 'https://img.icons8.com/color/96/pubg.png', minPoints: 1500, inputPlaceholder: 'معرف اللاعب (PUBG ID)', keyboardType: 'numeric' }
+  const handleWheelReward = async (reward) => {
+    const type = wheelCooldown <= 0 ? 'daily' : 'ad';
+
+    setPoints(prev => prev + reward);
+
+    const nextSpinCount = spinCount + 1;
+    setSpinCount(nextSpinCount);
+
+    try {
+      await AsyncStorage.setItem(
+        spinCountKey,
+        String(nextSpinCount)
+      );
+    } catch (error) {
+      console.log('Spin count error:', error);
+    }
+
+    setWheelRewardText(
+      `كفو! ربحت ${reward} توكن PPT جديد 🎉`
+    );
+
+    if (type === 'daily') {
+      const now = Date.now();
+
+      try {
+        await AsyncStorage.setItem(
+          lastDailyKey,
+          String(now)
+        );
+      } catch (error) {
+        console.log('Daily wheel error:', error);
+      }
+
+      setWheelCooldown(WHEEL_COOLDOWN);
+    } else {
+      const nextAdSpins = Math.max(0, adSpins - 1);
+
+      try {
+        await AsyncStorage.setItem(
+          adSpinsKey,
+          String(nextAdSpins)
+        );
+      } catch (error) {
+        console.log('Ad spin error:', error);
+      }
+
+      setAdSpins(nextAdSpins);
+    }
+
+    Alert.alert(
+      '🎡 PayPop',
+      `ربحت ${reward} PPT!`
+    );
+  };
+
+  const watchAdForSpins = () => {
+    if (adCooldown > 0) {
+      Alert.alert(
+        '⏳ انتظر قليلاً',
+        `يمكنك مشاهدة إعلان جديد بعد:\n${formatWheelTime(adCooldown)}`
+      );
+      return;
+    }
+
+    Alert.alert(
+      '📺 إعلان تجريبي',
+      'في النسخة الحالية سيتم محاكاة مشاهدة الإعلان للحصول على 3 دورات مجانية.',
+      [
+        {
+          text: 'إلغاء',
+          style: 'cancel'
+        },
+        {
+          text: 'متابعة',
+          onPress: async () => {
+            const now = Date.now();
+            const next = Math.min(3, adSpins + 3);
+
+            setAdSpins(next);
+            setAdCooldown(WHEEL_COOLDOWN);
+
+            try {
+              await AsyncStorage.multiSet([
+                [adSpinsKey, String(next)],
+                [lastAdGrantKey, String(now)]
+              ]);
+            } catch (error) {
+              console.log('Ad reward error:', error);
+            }
+
+            Alert.alert(
+              '🎉 تمت الإضافة',
+              'حصلت على 3 دورات مجانية للعجلة!'
+            );
+          }
+        }
+      ]
+    );
+  };
+    const pickAvatar = async () => {
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert(
+          'الصلاحية مطلوبة',
+          'اسمح للتطبيق بالوصول إلى الصور لاختيار صورة الحساب.'
+        );
+        return;
+      }
+
+      const result =
+        await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8
+        });
+
+      if (!result.canceled && result.assets?.length) {
+        setUserAvatar(result.assets[0].uri);
+        setIsCustomImage(true);
+      }
+    } catch (error) {
+      Alert.alert('خطأ', 'تعذر اختيار الصورة.');
+    }
+  };
+
+  const selectEmojiAvatar = (emoji) => {
+    setUserAvatar(emoji);
+    setIsCustomImage(false);
+  };
+
+  const openWheel = () => {
+    setWheelRewardText(
+      'اضغط على «أدر العجلة» وجرّب حظك 🎡'
+    );
+    setWheelModalVisible(true);
+  };
+
+  const handleWithdrawMethod = (method) => {
+    setSelectedMethod(method);
+    setWithdrawInput('');
+  };
+
+  const submitWithdraw = () => {
+    if (!withdrawInput.trim()) {
+      Alert.alert(
+        'تنبيه',
+        'أدخل معلومات السحب أولاً.'
+      );
+      return;
+    }
+
+    Alert.alert(
+      'طلب السحب',
+      `تم تسجيل طلب السحب عبر ${selectedMethod?.name || 'الطريقة المختارة'}.`
+    );
+
+    setSelectedMethod(null);
+    setWithdrawInput('');
+  };
+    const earnMethods = [
+    {
+      id: 'daily',
+      title: 'التعدين اليومي',
+      description: '+50 PPT كل 24 ساعة',
+      icon: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+      reward: 50
+    },
+    {
+      id: 'wheel',
+      title: 'عجلة توكنات الحظ',
+      description: 'دورة مجانية كل 24 ساعة 🎡',
+      reward: '10 - 25 PPT'
+    },
+    {
+      id: 'video',
+      title: 'شاهد فيديو',
+      description: 'احصل على PPT مقابل مشاهدة الفيديو',
+      icon: 'https://cdn-icons-png.flaticon.com/512/1179/1179069.png',
+      reward: 15
+    },
+    {
+      id: 'game',
+      title: 'ألعب واربح',
+      description: 'العب الألعاب واحصل على مكافآت',
+      icon: 'https://cdn-icons-png.flaticon.com/512/808/808439.png',
+      reward: 20
+    },
+    {
+      id: 'invite',
+      title: 'ادعُ أصدقاءك',
+      description: 'اربح PPT عن كل صديق',
+      icon: 'https://cdn-icons-png.flaticon.com/512/1256/1256650.png',
+      reward: 100
+    },
+    {
+      id: 'bonus',
+      title: 'مكافأة خاصة',
+      description: 'مكافآت إضافية من PayPop',
+      icon: 'https://cdn-icons-png.flaticon.com/512/2583/2583344.png',
+      reward: 25
+    }
   ];
 
-  const earnMethods = [
-    { id: 'wheel', name: 'عجلة توكنات الحظ', icon: 'https://img.icons8.com/fluency/96/luck.png', desc: 'أدر العجلة واكسب توكنات PPT فورية', onPress: () => setWheelModalVisible(true) },
-    { id: 'ads', name: 'التعدين عبر مشاهدة الإعلانات', icon: 'https://img.icons8.com/color/96/video.png', desc: 'شاهد إعلاناً قصيراً واحصل على (+30 PPT)', onPress: () => addPoints(30, "مشاهدة إعلان ترويجي") },
-    { id: 'survey', name: 'استطلاعات الرأي الرقمية', icon: 'https://img.icons8.com/color/96/faq.png', desc: 'أجب عن أسئلة خفيفة واربح (+20 PPT)', onPress: () => addPoints(20, "استطلاع الرأي الثقافي") },
-    { id: 'games', name: 'العب واكسب توكنات PPT', icon: 'https://img.icons8.com/color/96/controller.png', desc: 'استمتع بالألعاب واجمع رصيد إضافي', onPress: () => Alert.alert("قسم الألعاب", "قريباً تفعيل تحديات الألعاب!") }
+  const withdrawMethods = [
+    {
+      id: 'paypal',
+      name: 'PayPal',
+      icon: 'https://cdn-icons-png.flaticon.com/512/174/174861.png'
+    },
+    {
+      id: 'binance',
+      name: 'Binance',
+      icon: 'https://cdn-icons-png.flaticon.com/512/12114/12114219.png'
+    },
+    {
+      id: 'redotpay',
+      name: 'RedotPay',
+      icon: 'https://cdn-icons-png.flaticon.com/512/5968/5968268.png'
+    },
+    {
+      id: 'baridimob',
+      name: 'BaridiMob',
+      icon: 'https://cdn-icons-png.flaticon.com/512/2830/2830284.png'
+    }
   ];
 
-  const isRtl = currentLang === 'ar';
-  const textDirectionStyle = { textAlign: isRtl ? 'right' : 'left' };
-  const rowDirectionStyle = { flexDirection: isRtl ? 'row-reverse' : 'row' };
+  const currencySymbols = {
+    USD: '$',
+    DZD: 'دج',
+    EUR: '€'
+  };
 
-  const themeStyles = {
-    container: { backgroundColor: isDarkMode ? '#0F172A' : '#F8FAFC' },
-    card: { backgroundColor: isDarkMode ? '#1E293B' : 'white' },
-    textColor: { color: isDarkMode ? '#F1F5F9' : '#1E293B' },
-    subTextColor: { color: isDarkMode ? '#94A3B8' : '#64748B' },
-    inputBg: { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', color: isDarkMode ? 'white' : 'black', borderColor: isDarkMode ? '#334155' : '#E2E8F0' },
-    navBg: { backgroundColor: isDarkMode ? '#1E293B' : 'white', borderTopColor: isDarkMode ? '#334155' : '#334155' },
-    modalBg: { backgroundColor: isDarkMode ? '#1E293B' : 'white' }
+  const getUsdValue = () => {
+    return (points * 0.001).toFixed(2);
+  };
+
+  const getCurrencyValue = () => {
+    const usd = Number(getUsdValue());
+
+    if (currentCurrency === 'DZD') {
+      return `${(usd * 130).toFixed(0)} دج`;
+    }
+
+    if (currentCurrency === 'EUR') {
+      return `${(usd * 0.86).toFixed(2)} €`;
+    }
+
+    return `$${usd.toFixed(2)}`;
+  };
+    const renderAvatar = () => {
+    if (isCustomImage) {
+      return (
+        <Image
+          source={{ uri: userAvatar }}
+          style={styles.avatarImage}
+        />
+      );
+    }
+
+    return (
+      <Text style={styles.avatarEmoji}>
+        {userAvatar}
+      </Text>
+    );
+  };
+
+  const renderEarnIcon = (method) => {
+    if (method.id === 'wheel') {
+      return <WheelLogo size={42} />;
+    }
+
+    return (
+      <Image
+        source={{ uri: method.icon }}
+        style={styles.gridItemImage}
+      />
+    );
+  };
+
+  const renderBottomNav = () => (
+    <View style={[
+      styles.bottomNav,
+      isDarkMode && styles.bottomNavDark
+    ]}>
+      <TouchableOpacity
+        style={styles.navItem}
+        onPress={() => setCurrentScreen('home')}
+      >
+        <Text style={styles.navIcon}>🏠</Text>
+        <Text style={[
+          styles.navText,
+          currentScreen === 'home' && styles.navTextActive
+        ]}>
+          {t.homeNav}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.navItem}
+        onPress={() => setCurrentScreen('earn')}
+      >
+        <Text style={styles.navIcon}>⚡</Text>
+        <Text style={[
+          styles.navText,
+          currentScreen === 'earn' && styles.navTextActive
+        ]}>
+          {t.earnNav}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.navItem}
+        onPress={() => setCurrentScreen('wallet')}
+      >
+        <Text style={styles.navIcon}>💳</Text>
+        <Text style={[
+          styles.navText,
+          currentScreen === 'wallet' && styles.navTextActive
+        ]}>
+          {t.walletNav}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.navItem}
+        onPress={() => setCurrentScreen('profile')}
+      >
+        <Text style={styles.navIcon}>👤</Text>
+        <Text style={[
+          styles.navText,
+          currentScreen === 'profile' && styles.navTextActive
+        ]}>
+          {t.profileNav}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+  const renderHeader = (title) => (
+    <View style={[
+      styles.header,
+      isDarkMode && styles.headerDark
+    ]}>
+      <View style={styles.headerLogo}>
+        <WheelLogo size={42} />
+      </View>
+
+      <View style={styles.headerTitleBox}>
+        <Text style={[
+          styles.headerTitle,
+          isDarkMode && styles.textLight
+        ]}>
+          {title}
+        </Text>
+        <Text style={styles.headerPoints}>
+          {points.toLocaleString()} PPT
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.headerAvatar}
+        onPress={() => setCurrentScreen('profile')}
+      >
+        {renderAvatar()}
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderSplash = () => (
+    <View style={[
+      styles.splash,
+      isDarkMode && styles.splashDark
+    ]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+      />
+
+      <WheelLogo size={100} />
+
+      <Text style={styles.splashTitle}>
+        PayPop
+      </Text>
+
+      <Text style={[
+        styles.splashDesc,
+        isDarkMode && styles.textLight
+      ]}>
+        {t.splashDesc}
+      </Text>
+
+      <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={() => setCurrentScreen('login')}
+      >
+        <Text style={styles.primaryButtonText}>
+          {t.startNow}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderLogin = () => (
+    <ScrollView
+      contentContainerStyle={[
+        styles.authContainer,
+        isDarkMode && styles.screenDark
+      ]}
+    >
+      <WheelLogo size={75} />
+
+      <Text style={[
+        styles.authTitle,
+        isDarkMode && styles.textLight
+      ]}>
+        {isSignUp ? t.signUp : t.login}
+      </Text>
+
+      <TextInput
+        style={[
+          styles.input,
+          isDarkMode && styles.inputDark
+        ]}
+        placeholder={t.emailPlaceholder}
+        placeholderTextColor={isDarkMode ? '#94A3B8' : '#64748B'}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        value={userEmail}
+        onChangeText={setUserEmail}
+      />
+
+      <TextInput
+        style={[
+          styles.input,
+          isDarkMode && styles.inputDark
+        ]}
+        placeholder={t.passPlaceholder}
+        placeholderTextColor={isDarkMode ? '#94A3B8' : '#64748B'}
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
+
+      {!isSignUp && (
+        <TouchableOpacity
+          onPress={() =>
+            Alert.alert(
+              'استرجاع كلمة السر',
+              'سيتم إضافة استرجاع كلمة السر في النسخة القادمة.'
+            )
+          }
+        >
+          <Text style={styles.linkText}>
+            {t.forgotPass}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={() => {
+          if (!userEmail.trim() || !password.trim()) {
+            Alert.alert(
+              'تنبيه',
+              'أدخل البريد الإلكتروني وكلمة السر أولاً.'
+            );
+            return;
+          }
+
+          setCurrentScreen('home');
+        }}
+      >
+        <Text style={styles.primaryButtonText}>
+          {isSignUp ? t.signUp : t.login}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => setIsSignUp(!isSignUp)}
+      >
+        <Text style={styles.switchAuthText}>
+          {isSignUp ? t.hasAccount : t.noAccount}
+        </Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+  const renderHome = () => (
+    <SafeAreaView style={[
+      styles.container,
+      isDarkMode && styles.screenDark
+    ]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+      />
+
+      {renderHeader(t.dashboard)}
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[
+          styles.balanceCard,
+          isDarkMode && styles.balanceCardDark
+        ]}>
+          <Text style={styles.balanceLabel}>
+            {t.points}
+          </Text>
+
+          <Text style={styles.balanceValue}>
+            {points.toLocaleString()} PPT
+          </Text>
+
+          <Text style={styles.usdValue}>
+            ≈ {getCurrencyValue()}
+          </Text>
+
+          <View style={styles.balanceStats}>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>
+                +50
+              </Text>
+              <Text style={styles.statLabel}>
+                {t.todayEarned}
+              </Text>
+            </View>
+
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>
+                {spinCount}
+              </Text>
+              <Text style={styles.statLabel}>
+                دورات العجلة
+              </Text>
+            </View>
+
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>
+                0
+              </Text>
+              <Text style={styles.statLabel}>
+                {t.invitedFriends}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={[
+          styles.dailyCard,
+          isDarkMode && styles.cardDark
+        ]}>
+          <Text style={[
+            styles.cardTitle,
+            isDarkMode && styles.textLight
+          ]}>
+            🎁 {t.dailyChallenge}
+          </Text>
+
+          <Text style={[
+            styles.cardDescription,
+            isDarkMode && styles.textMuted
+          ]}>
+            {t.dailyDesc}
+          </Text>
+
+          <TouchableOpacity
+            style={styles.rewardButton}
+            onPress={claimDailyReward}
+          >
+            <Text style={styles.rewardButtonText}>
+              {t.claimDaily}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={[
+          styles.quickCard,
+          isDarkMode && styles.cardDark
+        ]}>
+          <Text style={[
+            styles.cardTitle,
+            isDarkMode && styles.textLight
+          ]}>
+            🎡 عجلة توكنات الحظ
+          </Text>
+
+          <Text style={[
+            styles.cardDescription,
+            isDarkMode && styles.textMuted
+          ]}>
+            اربح من 10 إلى 25 PPT في كل دورة
+          </Text>
+
+          <TouchableOpacity
+            style={styles.wheelQuickButton}
+            onPress={openWheel}
+          >
+            <WheelLogo size={42} />
+
+            <View style={styles.quickTextBox}>
+              <Text style={styles.quickButtonTitle}>
+                افتح العجلة
+              </Text>
+
+              <Text style={styles.quickButtonSubtitle}>
+                {dailyAvailable
+                  ? '🎁 الدورة اليومية متاحة'
+                  : adSpins > 0
+                    ? `🎟️ لديك ${adSpins} دورات مجانية`
+                    : `⏳ ${formatWheelTime(wheelCooldown)}`
+                }
+              </Text>
+            </View>
+
+            <Text style={styles.arrow}>
+              ‹
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={styles.withdrawHomeButton}
+          onPress={() => setCurrentScreen('wallet')}
+        >
+          <Text style={styles.withdrawHomeButtonText}>
+            💳 سحب أرباحي
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {renderBottomNav()}
+    </SafeAreaView>
+  );
+  const renderEarn = () => (
+    <SafeAreaView style={[
+      styles.container,
+      isDarkMode && styles.screenDark
+    ]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+      />
+
+      {renderHeader(t.earnTitle)}
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={[
+          styles.sectionSubtitle,
+          isDarkMode && styles.textMuted
+        ]}>
+          {t.earnSubtitle}
+        </Text>
+
+        <View style={styles.earnGrid}>
+          {earnMethods.map((method) => (
+            <TouchableOpacity
+              key={method.id}
+              style={[
+                styles.earnCard,
+                isDarkMode && styles.cardDark
+              ]}
+              onPress={() => {
+                if (method.id === 'wheel') {
+                  openWheel();
+                  return;
+                }
+
+                if (method.id === 'daily') {
+                  claimDailyReward();
+                  return;
+                }
+
+                if (method.id === 'invite') {
+                  setReferralModalVisible(true);
+                  return;
+                }
+
+                Alert.alert(
+                  method.title,
+                  `المكافأة: ${method.reward} PPT`
+                );
+              }}
+            >
+              <View style={styles.earnIconBox}>
+                {renderEarnIcon(method)}
+              </View>
+
+              <Text style={[
+                styles.earnCardTitle,
+                isDarkMode && styles.textLight
+              ]}>
+                {method.title}
+              </Text>
+
+              <Text style={[
+                styles.earnCardDescription,
+                isDarkMode && styles.textMuted
+              ]}>
+                {method.description}
+              </Text>
+
+              <View style={styles.rewardBadge}>
+                <Text style={styles.rewardBadgeText}>
+                  +{method.reward} PPT
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+
+      {renderBottomNav()}
+    </SafeAreaView>
+  );
+  const renderWallet = () => (
+    <SafeAreaView style={[
+      styles.container,
+      isDarkMode && styles.screenDark
+    ]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+      />
+
+      {renderHeader(t.walletTitle)}
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[
+          styles.walletBalanceCard,
+          isDarkMode && styles.cardDark
+        ]}>
+          <Text style={styles.walletBalanceLabel}>
+            رصيدك الحالي
+          </Text>
+
+          <Text style={styles.walletBalanceValue}>
+            {points.toLocaleString()} PPT
+          </Text>
+
+          <Text style={styles.walletUsdValue}>
+            ≈ {getCurrencyValue()}
+          </Text>
+        </View>
+
+        <Text style={[
+          styles.sectionSubtitle,
+          isDarkMode && styles.textMuted
+        ]}>
+          {t.walletSubtitle}
+        </Text>
+
+        {withdrawMethods.map((method) => (
+          <TouchableOpacity
+            key={method.id}
+            style={[
+              styles.withdrawCard,
+              isDarkMode && styles.cardDark
+            ]}
+            onPress={() => handleWithdrawMethod(method)}
+          >
+            <Image
+              source={{ uri: method.icon }}
+              style={styles.withdrawIcon}
+            />
+
+            <View style={styles.withdrawInfo}>
+              <Text style={[
+                styles.withdrawName,
+                isDarkMode && styles.textLight
+              ]}>
+                {method.name}
+              </Text>
+
+              <Text style={[
+                styles.withdrawHint,
+                isDarkMode && styles.textMuted
+              ]}>
+                اضغط لاختيار طريقة السحب
+              </Text>
+            </View>
+
+            <Text style={styles.arrow}>
+              ‹
+            </Text>
+          </TouchableOpacity>
+        ))}
+
+        <Text style={[
+          styles.withdrawNote,
+          isDarkMode && styles.textMuted
+        ]}>
+          ⚠️ السحب الحقيقي سيتم تفعيله عند ربط نظام الدفع في النسخة النهائية.
+        </Text>
+      </ScrollView>
+
+      {renderBottomNav()}
+    </SafeAreaView>
+  );
+
+  const renderProfile = () => (
+    <SafeAreaView style={[
+      styles.container,
+      isDarkMode && styles.screenDark
+    ]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+      />
+
+      {renderHeader(t.profileSettings)}
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[
+          styles.profileCard,
+          isDarkMode && styles.cardDark
+        ]}>
+          <TouchableOpacity
+            style={styles.profileAvatar}
+            onPress={pickAvatar}
+          >
+            {renderAvatar()}
+          </TouchableOpacity>
+
+          <Text style={[
+            styles.profileEmail,
+            isDarkMode && styles.textLight
+          ]}>
+            {userEmail || 'مستخدم PayPop'}
+          </Text>
+
+          <Text style={styles.profilePoints}>
+            {points.toLocaleString()} PPT
+          </Text>
+
+          <TouchableOpacity
+            style={styles.avatarButton}
+            onPress={pickAvatar}
+          >
+            <Text style={styles.avatarButtonText}>
+              📷 تغيير صورة الحساب
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.emojiRow}>
+            {emojisList.map((emoji) => (
+              <TouchableOpacity
+                key={emoji}
+                style={styles.emojiButton}
+                onPress={() => selectEmojiAvatar(emoji)}
+              >
+                <Text style={styles.emojiText}>
+                  {emoji}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+        <View style={[
+          styles.settingsSection,
+          isDarkMode && styles.cardDark
+        ]}>
+          <Text style={[
+            styles.settingsTitle,
+            isDarkMode && styles.textLight
+          ]}>
+            {t.appSettings}
+          </Text>
+
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => setIsDarkMode(!isDarkMode)}
+          >
+            <Text style={styles.settingIcon}>🌙</Text>
+
+            <Text style={[
+              styles.settingText,
+              isDarkMode && styles.textLight
+            ]}>
+              {t.darkMode}
+            </Text>
+
+            <Text style={styles.settingValue}>
+              {isDarkMode ? 'ON' : 'OFF'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => setCurrencyModalVisible(true)}
+          >
+            <Text style={styles.settingIcon}>💰</Text>
+
+            <Text style={[
+              styles.settingText,
+              isDarkMode && styles.textLight
+            ]}>
+              {t.currency}
+            </Text>
+
+            <Text style={styles.settingValue}>
+              {currentCurrency}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => setLangModalVisible(true)}
+          >
+            <Text style={styles.settingIcon}>🌐</Text>
+
+            <Text style={[
+              styles.settingText,
+              isDarkMode && styles.textLight
+            ]}>
+              {t.language}
+            </Text>
+
+            <Text style={styles.settingValue}>
+              {currentLang.toUpperCase()}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() =>
+              Alert.alert(
+                t.supportCenter,
+                'تواصل معنا عبر مركز الدعم في النسخة النهائية.'
+              )
+            }
+          >
+            <Text style={styles.settingIcon}>🆘</Text>
+
+            <Text style={[
+              styles.settingText,
+              isDarkMode && styles.textLight
+            ]}>
+              {t.supportCenter}
+            </Text>
+
+            <Text style={styles.arrow}>
+              ‹
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={styles.referralButton}
+          onPress={() => setReferralModalVisible(true)}
+        >
+          <Text style={styles.referralButtonText}>
+            👥 دعوة الأصدقاء وربح PPT
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={() => {
+            setCurrentScreen('login');
+            setUserEmail('');
+            setPassword('');
+          }}
+        >
+          <Text style={styles.logoutButtonText}>
+            🚪 {t.logout}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {renderBottomNav()}
+    </SafeAreaView>
+  );
+  const renderWheelModal = () => (
+    <Modal
+      visible={wheelModalVisible}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setWheelModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[
+          styles.wheelModal,
+          isDarkMode && styles.cardDark
+        ]}>
+          <View style={styles.modalHeader}>
+            <Text style={[
+              styles.modalTitle,
+              isDarkMode && styles.textLight
+            ]}>
+              🎡 عجلة توكنات الحظ
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => setWheelModalVisible(false)}
+            >
+              <Text style={styles.closeButton}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.wheelScroll}
+          >
+            <Text style={[
+              styles.wheelStatus,
+              isDarkMode && styles.textMuted
+            ]}>
+              {dailyAvailable
+                ? '🎁 الدورة اليومية مجانية ومتاحة الآن'
+                : adSpins > 0
+                  ? `🎟️ لديك ${adSpins} دورات مجانية من الإعلان`
+                  : `⏳ الدورة اليومية بعد ${formatWheelTime(wheelCooldown)}`
+              }
+            </Text>
+
+            <View style={styles.wheelBox}>
+              <Wheel
+                onReward={handleWheelReward}
+                disabled={!wheelCanSpin}
+              />
+            </View>
+
+            <Text style={styles.wheelRewardText}>
+              {wheelRewardText}
+            </Text>
+
+            {!dailyAvailable && (
+              <Text style={[
+                styles.adSpinInfo,
+                isDarkMode && styles.textMuted
+              ]}>
+                الدورات المجانية المتبقية: {adSpins}
+              </Text>
+            )}
+
+            <TouchableOpacity
+              style={[
+                styles.adButton,
+                adCooldown > 0 && styles.disabledButton
+              ]}
+              onPress={watchAdForSpins}
+              disabled={adCooldown > 0}
+            >
+              <Text style={styles.adButtonText}>
+                {adCooldown > 0
+                  ? `📺 إعلان جديد بعد ${formatWheelTime(adCooldown)}`
+                  : '📺 شاهد إعلان واحصل على 3 دورات'
+                }
+              </Text>
+            </TouchableOpacity>
+
+            <Text style={[
+              styles.wheelNote,
+              isDarkMode && styles.textMuted
+            ]}>
+              الجوائز المتاحة: 10 PPT • 15 PPT • 25 PPT
+            </Text>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const renderCurrencyModal = () => (
+    <Modal
+      visible={currencyModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setCurrencyModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[
+          styles.smallModal,
+          isDarkMode && styles.cardDark
+        ]}>
+          <Text style={[
+            styles.modalTitle,
+            isDarkMode && styles.textLight
+          ]}>
+            {t.selectCurrencyTitle}
+          </Text>
+
+          {['USD', 'DZD', 'EUR'].map(currency => (
+            <TouchableOpacity
+              key={currency}
+              style={styles.modalOption}
+              onPress={() => {
+                setCurrentCurrency(currency);
+                setCurrencyModalVisible(false);
+              }}
+            >
+              <Text style={styles.modalOptionText}>
+                {currencySymbols[currency]} {currency}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          <TouchableOpacity
+            onPress={() => setCurrencyModalVisible(false)}
+          >
+            <Text style={styles.cancelText}>
+              {t.cancel}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+  const renderLanguageModal = () => (
+    <Modal
+      visible={langModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setLangModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[
+          styles.smallModal,
+          isDarkMode && styles.cardDark
+        ]}>
+          <Text style={[
+            styles.modalTitle,
+            isDarkMode && styles.textLight
+          ]}>
+            {t.selectLangTitle}
+          </Text>
+
+          {[
+            { id: 'ar', name: 'العربية 🇩🇿' },
+            { id: 'fr', name: 'Français 🇫🇷' },
+            { id: 'en', name: 'English 🇬🇧' }
+          ].map(language => (
+            <TouchableOpacity
+              key={language.id}
+              style={styles.modalOption}
+              onPress={() => {
+                setCurrentLang(language.id);
+                setLangModalVisible(false);
+              }}
+            >
+              <Text style={styles.modalOptionText}>
+                {language.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          <TouchableOpacity
+            onPress={() => setLangModalVisible(false)}
+          >
+            <Text style={styles.cancelText}>
+              {t.cancel}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const renderWithdrawModal = () => (
+    <Modal
+      visible={!!selectedMethod}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setSelectedMethod(null)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[
+          styles.smallModal,
+          isDarkMode && styles.cardDark
+        ]}>
+          <Text style={[
+            styles.modalTitle,
+            isDarkMode && styles.textLight
+          ]}>
+            💳 سحب عبر {selectedMethod?.name}
+          </Text>
+
+          <Text style={[
+            styles.modalDescription,
+            isDarkMode && styles.textMuted
+          ]}>
+            أدخل معلومات حسابك لاستقبال الأرباح.
+          </Text>
+
+          <TextInput
+            style={[
+              styles.input,
+              isDarkMode && styles.inputDark
+            ]}
+            placeholder="البريد أو رقم الحساب"
+            placeholderTextColor={
+              isDarkMode ? '#94A3B8' : '#64748B'
+            }
+            value={withdrawInput}
+            onChangeText={setWithdrawInput}
+          />
+
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={submitWithdraw}
+          >
+            <Text style={styles.primaryButtonText}>
+              إرسال طلب السحب
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setSelectedMethod(null)}
+          >
+            <Text style={styles.cancelText}>
+              {t.cancel}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const renderReferralModal = () => (
+    <Modal
+      visible={referralModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setReferralModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[
+          styles.smallModal,
+          isDarkMode && styles.cardDark
+        ]}>
+          <Text style={[
+            styles.modalTitle,
+            isDarkMode && styles.textLight
+          ]}>
+            👥 دعوة الأصدقاء
+          </Text>
+
+          <Text style={[
+            styles.modalDescription,
+            isDarkMode && styles.textMuted
+          ]}>
+            شارك كود الدعوة واربح 100 PPT عند انضمام صديقك.
+          </Text>
+
+          <View style={styles.referralCodeBox}>
+            <Text style={styles.referralCode}>
+              {referralCode}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => {
+              Alert.alert(
+                '📋 كود الدعوة',
+                `كودك هو: ${referralCode}`
+              );
+            }}
+          >
+            <Text style={styles.primaryButtonText}>
+              نسخ كود الدعوة
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setReferralModalVisible(false)}
+          >
+            <Text style={styles.cancelText}>
+              {t.cancel}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+  const renderAppContent = () => {
+    if (currentScreen === 'splash') {
+      return renderSplash();
+    }
+
+    if (currentScreen === 'login') {
+      return renderLogin();
+    }
+
+    if (currentScreen === 'home') {
+      return renderHome();
+    }
+
+    if (currentScreen === 'earn') {
+      return renderEarn();
+    }
+
+    if (currentScreen === 'wallet') {
+      return renderWallet();
+    }
+
+    if (currentScreen === 'profile') {
+      return renderProfile();
+    }
+
+    return renderHome();
   };
 
   return (
-    <SafeAreaView style={[styles.container, themeStyles.container]}>
-      <StatusBar backgroundColor="#5849E2" barStyle="light-content" />
-      
-      {currentScreen !== 'splash' && currentScreen !== 'login' && (
-        <View style={[styles.header, rowDirectionStyle]}>
-          <Text style={styles.logo}>{t.appName} <Text style={{fontSize: 12, color: '#34D399'}}>EcoSystem</Text></Text>
-          <View style={styles.tokenHeaderBadge}>
-            <Text style={styles.tokenSymbolText}>💎 PPT</Text>
-            <Text style={styles.badgeText}>{points}</Text>
-          </View>
-        </View>
-      )}
+    <>
+      {renderAppContent()}
 
-      {currentScreen === 'splash' && (
-        <View style={styles.splashContainer}>
-          <View style={[styles.splashCard, themeStyles.card]}>
-            <View style={styles.splashTokenBadge}>
-              <Text style={{fontSize: 40}}>💎</Text>
-            </View>
-            <Text style={styles.splashTitle}>{t.appName}</Text>
-            <Text style={[styles.splashDesc, themeStyles.subTextColor]}>{t.splashDesc}</Text>
-            <TouchableOpacity style={styles.splashBtn} onPress={() => setCurrentScreen('login')}>
-              <Text style={styles.splashBtnText}>{t.startNow}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {currentScreen === 'login' && (
-        <ScrollView contentContainerStyle={styles.authContainer}>
-          <View style={styles.logoBox}>
-            <View style={styles.loginTokenGlow}>
-              <Text style={{fontSize: 32}}>💎</Text>
-            </View>
-            <Text style={styles.appTitle}>{t.appName}</Text>
-          </View>
-          <Text style={[styles.subTitle, themeStyles.subTextColor]}>{isSignUp ? t.signUp : t.login}</Text>
-
-          <TextInput 
-            style={[styles.input, themeStyles.inputBg, textDirectionStyle]} 
-            placeholder={t.emailPlaceholder} 
-            placeholderTextColor="#888"
-            onChangeText={setUserEmail}
-          />
-          <TextInput 
-            style={[styles.input, themeStyles.inputBg, textDirectionStyle]} 
-            placeholder={t.passPlaceholder} 
-            secureTextEntry 
-            placeholderTextColor="#888"
-          />
-
-          {!isSignUp && (
-            <TouchableOpacity style={[styles.forgotBtn, {alignSelf: isRtl ? 'flex-start' : 'flex-end'}]} onPress={() => Alert.alert("استعادة", "تم إرسال رابط استعادة محفظة التوكن.")}>
-              <Text style={styles.forgotText}>{t.forgotPass}</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => setCurrentScreen('home')}>
-            <Text style={styles.btnText}>{isSignUp ? t.signUp : t.login}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.switchAuthBtn} onPress={() => setIsSignUp(!isSignUp)}>
-            <Text style={styles.switchAuthText}>{isSignUp ? t.hasAccount : t.noAccount}</Text>
-          </TouchableOpacity>
-
-          <View style={styles.socialAuthContainer}>
-            <View style={styles.socialDividerRow}>
-              <View style={[styles.socialDividerLine, {backgroundColor: isDarkMode ? '#334155' : '#E2E8F0'}]} />
-              <Text style={[styles.socialDividerText, themeStyles.subTextColor]}>أو المتابعة عبر</Text>
-              <View style={[styles.socialDividerLine, {backgroundColor: isDarkMode ? '#334155' : '#E2E8F0'}]} />
-            </View>
-
-            <View style={[styles.socialBtnsRow, rowDirectionStyle]}>
-              <TouchableOpacity 
-                style={[styles.socialBtn, {backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF', borderColor: isDarkMode ? '#334155' : '#E2E8F0'}]} 
-                onPress={() => {
-                  Alert.alert("تسجيل جوجل", "جاري فتح بوابة المصادقة عبر Google...");
-                  setTimeout(() => setCurrentScreen('home'), 1000);
-                }}
-              >
-                <Image source={{ uri: 'https://img.icons8.com/color/96/google-logo.png' }} style={styles.socialIcon} />
-                <Text style={[styles.socialBtnText, themeStyles.textColor]}>Google</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.socialBtn, {backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF', borderColor: isDarkMode ? '#334155' : '#E2E8F0'}]} 
-                onPress={() => {
-                  Alert.alert("تسجيل فايسبوك", "جاري فتح بوابة المصادقة عبر Facebook...");
-                  setTimeout(() => setCurrentScreen('home'), 1000);
-                }}
-              >
-                <Image source={{ uri: 'https://img.icons8.com/color/96/facebook-new.png' }} style={styles.socialIcon} />
-                <Text style={[styles.socialBtnText, themeStyles.textColor]}>Facebook</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      )}
-
-      {currentScreen === 'home' && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.tokenCardContainer, themeStyles.card]}>
-            <View style={styles.tokenGlowCircle}>
-              <Text style={{fontSize: 28}}>💎</Text>
-            </View>
-            <Text style={[styles.cardTitle, themeStyles.textColor, {marginTop: 8}]}>{t.dashboard}</Text>
-            <Text style={styles.tokenAmountText}>{points} <Text style={{fontSize: 18, color: '#10B981'}}>PPT</Text></Text>
-            <View style={styles.tokenValueBadge}>
-              <Text style={styles.tokenValueText}>{t.usdValue}: {getConvertedValue()}</Text>
-            </View>
-          </View>
-
-          <View style={[styles.statsRow, rowDirectionStyle]}>
-            <View style={[styles.statBox, themeStyles.card]}>
-              <Text style={styles.statNumber}>+150 PPT</Text>
-              <Text style={[styles.statLabel, themeStyles.subTextColor]}>{t.todayEarned}</Text>
-            </View>
-            <View style={[styles.statBox, themeStyles.card]}>
-              <Text style={styles.statNumber}>3 PPT</Text>
-              <Text style={[styles.statLabel, themeStyles.subTextColor]}>{t.invitedFriends}</Text>
-            </View>
-          </View>
-
-          <View style={[styles.card, themeStyles.card]}>
-            <Text style={[styles.cardTitle, themeStyles.textColor, textDirectionStyle]}>{t.dailyChallenge}</Text>
-            <Text style={[styles.cardDesc, themeStyles.subTextColor, textDirectionStyle]}>{t.dailyDesc}</Text>
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#F59E0B'}]} onPress={() => addPoints(50, "مكافأة التعدين اليومي")}>
-              <Text style={styles.btnText}>{t.claimDaily}</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      )}
-
-      {currentScreen === 'earn' && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.mainCardContainer, themeStyles.card]}>
-            <Text style={[styles.walletMainTitle, themeStyles.textColor]}>{t.earnTitle}</Text>
-            <Text style={[styles.walletSubtitle, themeStyles.subTextColor]}>{t.earnSubtitle}</Text>
-
-            <View style={[styles.gridContainer, rowDirectionStyle]}>
-              {earnMethods.map((method) => (
-                <TouchableOpacity key={method.id} style={[styles.gridItemBox, isDarkMode && {backgroundColor: '#0F172A', borderColor: '#334155'}]} onPress={method.onPress}>
-                  <Image source={{ uri: method.icon }} style={styles.gridItemImage} />
-                  <Text style={[styles.gridItemName, themeStyles.textColor]}>{method.name}</Text>
-                  <Text style={[styles.gridItemMin, themeStyles.subTextColor]}>{method.desc}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </ScrollView>
-      )}
-
-      {currentScreen === 'wallet' && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.mainCardContainer, themeStyles.card]}>
-            <Text style={[styles.walletMainTitle, themeStyles.textColor]}>{t.walletTitle}</Text>
-            <Text style={[styles.walletSubtitle, themeStyles.subTextColor]}>{t.walletSubtitle}</Text>
-
-            <View style={[styles.gridContainer, rowDirectionStyle]}>
-              {withdrawalMethods.map((method) => (
-                <TouchableOpacity 
-                  key={method.id}
-                  style={[styles.gridItemBox, isDarkMode && {backgroundColor: '#0F172A', borderColor: '#334155'}]}
-                  onPress={() => { setSelectedMethod(method); setWithdrawInput(''); }}
-                >
-                  <Image source={{ uri: method.icon }} style={styles.gridItemImage} />
-                  <Text style={[styles.gridItemName, themeStyles.textColor]}>{method.name}</Text>
-                  <Text style={[styles.gridItemMin, themeStyles.subTextColor]}>Min: {method.minPoints} PPT</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </ScrollView>
-      )}
-
-      {currentScreen === 'profile' && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.profileHeaderCard, themeStyles.card]}>
-            <View style={styles.avatarContainer}>
-              <View style={styles.avatarCircle}>
-                {isCustomImage ? (
-                  <Image source={{ uri: userAvatar }} style={styles.avatarImageStyle} />
-                ) : (
-                  <Text style={styles.avatarText}>{userAvatar}</Text>
-                )}
-              </View>
-              <TouchableOpacity style={styles.cameraIconBtn} onPress={handleCameraAction}>
-                <Text style={styles.cameraIconText}>📷</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={[styles.profileName, themeStyles.textColor]}>{userEmail ? userEmail.split('@')[0] : "Youssef PPT Miner"}</Text>
-            <Text style={[styles.profileEmail, themeStyles.subTextColor]}>{userEmail || "miner@paypop.token"}</Text>
-
-            <View style={[styles.emojisRow, rowDirectionStyle]}>
-              {emojisList.map((emo, index) => (
-                <TouchableOpacity key={index} style={[styles.emojiOption, isDarkMode && {backgroundColor: '#0F172A', borderColor: '#334155'}]} onPress={() => { setUserAvatar(emo); setIsCustomImage(false); }}>
-                  <Text style={styles.emojiItem}>{emo}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <View style={[styles.card, themeStyles.card]}>
-            <TouchableOpacity style={styles.primaryBtn} onPress={() => setReferralModalVisible(true)}>
-              <Text style={styles.btnText}>إحالة معدني توكن PPT 🚀</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={[styles.card, themeStyles.card]}>
-            <Text style={[styles.cardTitle, themeStyles.textColor, textDirectionStyle]}>{t.profileSettings}</Text>
-            
-            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => setIsDarkMode(!isDarkMode)}>
-              <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
-              <Text style={[styles.menuText, themeStyles.textColor]}>{t.darkMode} ({isDarkMode ? 'ON 🌙' : 'OFF ☀️'})</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => Alert.alert(t.myCountry, "الجزائر (Algeria) 🇩🇿 - شبكة توكنات PayPop نشطة.")}>
-              <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
-              <Text style={[styles.menuText, themeStyles.textColor]}>{t.myCountry}: الجزائر 🇩🇿</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => setCurrencyModalVisible(true)}>
-              <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
-              <Text style={[styles.menuText, themeStyles.textColor]}>{t.currency} ({currentCurrency})</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={() => setLangModalVisible(true)}>
-              <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
-              <Text style={[styles.menuText, themeStyles.textColor]}>{t.language} ({currentLang.toUpperCase()})</Text>
-            </TouchableOpacity>
-
-            {/* تم ربط زر مركز الدعم والمساعدة بالواتساب مباشرة */}
-            <TouchableOpacity style={[styles.menuItem, rowDirectionStyle]} onPress={openWhatsAppSupport}>
-              <Text style={styles.menuArrow}>{isRtl ? '←' : '→'}</Text>
-              <Text style={[styles.menuText, themeStyles.textColor]}>💬 {t.supportCenter} (WhatsApp)</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.logoutBtn} onPress={() => setCurrentScreen('login')}>
-            <Text style={styles.logoutBtnText}>{t.logout}</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      )}
-
-      <Modal animationType="slide" transparent={true} visible={currencyModalVisible} onRequestClose={() => setCurrencyModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, themeStyles.modalBg]}>
-            <Text style={[styles.modalTitle, themeStyles.textColor]}>{t.selectCurrencyTitle}</Text>
-            
-            {['USD', 'EUR', 'DZD', 'EGP'].map((curr) => (
-              <TouchableOpacity 
-                key={curr} 
-                style={[styles.primaryBtn, {backgroundColor: currentCurrency === curr ? '#10B981' : '#5849E2', marginTop: 10}]} 
-                onPress={() => { setCurrentCurrency(curr); setCurrencyModalVisible(false); }}
-              >
-                <Text style={styles.btnText}>{curr === 'USD' ? 'دولار أمريكي (USD $)' : curr === 'EUR' ? 'أورو (EUR €)' : curr === 'DZD' ? 'دينار جزائري (DZD د.ج)' : 'جنيه مصري (EGP ج.م)'}</Text>
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#94A3B8', marginTop: 15}]} onPress={() => setCurrencyModalVisible(false)}>
-              <Text style={styles.btnText}>{t.cancel}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal animationType="slide" transparent={true} visible={langModalVisible} onRequestClose={() => setLangModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, themeStyles.modalBg]}>
-            <Text style={[styles.modalTitle, themeStyles.textColor]}>{t.selectLangTitle}</Text>
-            
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: currentLang === 'ar' ? '#10B981' : '#5849E2', marginTop: 10}]} onPress={() => { setCurrentLang('ar'); setLangModalVisible(false); }}>
-              <Text style={styles.btnText}>العربية (Arabic)</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: currentLang === 'fr' ? '#10B981' : '#5849E2', marginTop: 10}]} onPress={() => { setCurrentLang('fr'); setLangModalVisible(false); }}>
-              <Text style={styles.btnText}>Français (French)</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: currentLang === 'en' ? '#10B981' : '#5849E2', marginTop: 10}]} onPress={() => { setCurrentLang('en'); setLangModalVisible(false); }}>
-              <Text style={styles.btnText}>English</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#94A3B8', marginTop: 15}]} onPress={() => setLangModalVisible(false)}>
-              <Text style={styles.btnText}>{t.cancel}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal animationType="slide" transparent={true} visible={wheelModalVisible} onRequestClose={() => setWheelModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, themeStyles.modalBg]}>
-            <Text style={[styles.modalTitle, themeStyles.textColor]}>🎡 عجلة تعدين توكنات PPT</Text>
-            <View style={[styles.wheelBox, isDarkMode && {backgroundColor: '#0F172A', borderColor: '#334155'}]}>
-              <Image source={{ uri: 'https://img.icons8.com/fluency/96/luck.png' }} style={{ width: 60, height: 60, marginBottom: 10 }} />
-              <Text style={styles.wheelResultText}>{wheelRewardText}</Text>
-            </View>
-            <TouchableOpacity style={[styles.primaryBtn, isSpinning && {backgroundColor: '#94A3B8'}]} onPress={spinWheelAction} disabled={isSpinning}>
-              <Text style={styles.btnText}>{isSpinning ? "جاري استخراج التوكن..." : "أدر العجلة واكسب PPT"}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#94A3B8', marginTop: 10}]} onPress={() => setWheelModalVisible(false)}>
-              <Text style={styles.btnText}>إغلاق</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal animationType="slide" transparent={true} visible={selectedMethod !== null} onRequestClose={() => setSelectedMethod(null)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, themeStyles.modalBg]}>
-            {selectedMethod && (
-              <>
-                <View style={{ alignItems: 'center', marginBottom: 10 }}>
-                  <Image source={{ uri: selectedMethod.icon }} style={{ width: 50, height: 50, marginBottom: 5 }} />
-                  <Text style={[styles.modalTitle, themeStyles.textColor]}>صرف توكنات عبر {selectedMethod.name}</Text>
-                </View>
-                <TextInput style={[styles.modalInput, themeStyles.inputBg, textDirectionStyle]} placeholder={selectedMethod.inputPlaceholder} placeholderTextColor="#888" keyboardType={selectedMethod.keyboardType} value={withdrawInput} onChangeText={setWithdrawInput} />
-                <TouchableOpacity style={styles.primaryBtn} onPress={executeWithdraw}><Text style={styles.btnText}>تأكيد صرف توكنات PPT</Text></TouchableOpacity>
-                <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#94A3B8', marginTop: 10}]} onPress={() => setSelectedMethod(null)}><Text style={styles.btnText}>إلغاء</Text></TouchableOpacity>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      <Modal animationType="slide" transparent={true} visible={referralModalVisible} onRequestClose={() => setReferralModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, themeStyles.modalBg]}>
-            <Text style={[styles.cardTitle, themeStyles.textColor]}>شبكة إحالة معدني PayPop</Text>
-            <Text style={styles.refCode}>{referralCode}</Text>
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#10B981', marginTop: 15}]} onPress={() => { Alert.alert("تم النسخ", "تم نسخ كود إحالة التوكن بنجاح!"); setReferralModalVisible(false); }}><Text style={styles.btnText}>نسخ كود الإحالة</Text></TouchableOpacity>
-            <TouchableOpacity style={[styles.primaryBtn, {backgroundColor: '#EF4444', marginTop: 10}]} onPress={() => setReferralModalVisible(false)}><Text style={styles.btnText}>إغلاق</Text></TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {currentScreen !== 'splash' && currentScreen !== 'login' && (
-        <View style={[styles.bottomNav, themeStyles.navBg, rowDirectionStyle]}>
-          <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentScreen('home')}>
-            <Text style={[styles.navText, themeStyles.subTextColor, currentScreen === 'home' && styles.activeNav]}>{t.homeNav}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentScreen('earn')}>
-            <Text style={[styles.navText, themeStyles.subTextColor, currentScreen === 'earn' && styles.activeNav]}>{t.earnNav}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentScreen('wallet')}>
-            <Text style={[styles.navText, themeStyles.subTextColor, currentScreen === 'wallet' && styles.activeNav]}>{t.walletNav}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => setCurrentScreen('profile')}>
-            <Text style={[styles.navText, themeStyles.subTextColor, currentScreen === 'profile' && styles.activeNav]}>{t.profileNav}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </SafeAreaView>
+      {renderWheelModal()}
+      {renderCurrencyModal()}
+      {renderLanguageModal()}
+      {renderWithdrawModal()}
+      {renderReferralModal()}
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: { backgroundColor: '#5849E2', padding: 15, justifyContent: 'space-between', alignItems: 'center' },
-  logo: { color: 'white', fontSize: 22, fontWeight: 'bold' },
-  tokenHeaderBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#4738C4', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 5 },
-  tokenSymbolText: { color: '#34D399', fontWeight: 'bold', fontSize: 13 },
-  badgeText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC'
+  },
+
+  screenDark: {
+    backgroundColor: '#0F172A'
+  },
+
+  splash: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 25,
+    backgroundColor: '#F8FAFC'
+  },
+
+  splashDark: {
+    backgroundColor: '#0F172A'
+  },
+
+  splashTitle: {
+    marginTop: 15,
+    fontSize: 42,
+    fontWeight: '900',
+    color: '#7C3AED'
+  },
+
+  splashDesc: {
+    marginTop: 12,
+    maxWidth: 330,
+    textAlign: 'center',
+    fontSize: 16,
+    lineHeight: 25,
+    color: '#475569'
+  },
+
+  primaryButton: {
+    width: '100%',
+    marginTop: 22,
+    paddingVertical: 15,
+    borderRadius: 15,
+    alignItems: 'center',
+    backgroundColor: '#7C3AED',
+    elevation: 3
+  },
+
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900'
+  },
+
+  authContainer: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 25,
+    backgroundColor: '#F8FAFC'
+  },
+
+  authTitle: {
+    marginTop: 15,
+    marginBottom: 20,
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#1E293B'
+  },
+
+  input: {
+    width: '100%',
+    minHeight: 52,
+    marginTop: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    color: '#0F172A',
+    fontSize: 15
+  },
+
+  inputDark: {
+    backgroundColor: '#1E293B',
+    borderColor: '#475569',
+    color: '#FFFFFF'
+  },
+
+  linkText: {
+    marginTop: 14,
+    color: '#7C3AED',
+    fontWeight: '800'
+  },
+
+  switchAuthText: {
+    marginTop: 20,
+    color: '#2563EB',
+    fontWeight: '800',
+    textAlign: 'center'
+  },
+
+  header: {
+    minHeight: 72,
+    paddingHorizontal: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0'
+  },
+
+  headerDark: {
+    backgroundColor: '#111827',
+    borderBottomColor: '#334155'
+  },
+
+  headerLogo: {
+    marginRight: 10
+  },
+
+  headerTitleBox: {
+    flex: 1
+  },
+
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '900',
+    color: '#1E293B'
+  },
+
+  headerPoints: {
+    marginTop: 3,
+    color: '#7C3AED',
+    fontSize: 13,
+    fontWeight: '800'
+  },
+
+  headerAvatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3E8FF',
+    overflow: 'hidden'
+  },
+
+  avatarEmoji: {
+    fontSize: 27
+  },
+
+  avatarImage: {
+    width: 46,
+    height: 46
+  },
+
+  textLight: {
+    color: '#F8FAFC'
+  },
+
+  textMuted: {
+    color: '#94A3B8'
+  },
+
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 100
+  },
+
+  balanceCard: {
+    padding: 20,
+    borderRadius: 22,
+    backgroundColor: '#7C3AED',
+    elevation: 5
+  },
+
+  balanceCardDark: {
+    backgroundColor: '#5B21B6'
+  },
+
+  balanceLabel: {
+    color: '#EDE9FE',
+    fontSize: 14,
+    fontWeight: '700'
+  },
+
+  balanceValue: {
+    marginTop: 6,
+    color: '#FFFFFF',
+    fontSize: 32,
+    fontWeight: '900'
+  },
+
+  usdValue: {
+    marginTop: 4,
+    color: '#FDE68A',
+    fontSize: 16,
+    fontWeight: '800'
+  },
+
+  balanceStats: {
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+
+  statBox: {
+    flex: 1,
+    alignItems: 'center'
+  },
+
+  statNumber: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '900'
+  },
+
+  statLabel: {
+    marginTop: 4,
+    color: '#DDD6FE',
+    fontSize: 10,
+    textAlign: 'center'
+  },
   
-  splashContainer: { flex: 1, backgroundColor: '#5849E2', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  splashCard: { width: '100%', backgroundColor: 'white', padding: 30, borderRadius: 20, alignItems: 'center', elevation: 10 },
-  splashTokenBadge: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#EDE9FE', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-  splashTitle: { fontSize: 36, fontWeight: 'bold', color: '#5849E2', marginBottom: 10 },
-  splashDesc: { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 25, lineHeight: 22 },
-  splashBtn: { backgroundColor: '#5849E2', width: '100%', padding: 14, borderRadius: 10, alignItems: 'center' },
-  splashBtnText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
+    dailyCard: {
+    marginTop: 16,
+    padding: 18,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    elevation: 2
+  },
 
-  authContainer: { flexGrow: 1, justifyContent: 'center', padding: 20 },
-  logoBox: { alignItems: 'center', marginBottom: 15 },
-  loginTokenGlow: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#EDE9FE', justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-  appTitle: { fontSize: 36, fontWeight: 'bold', color: '#5849E2', textAlign: 'center' },
-  subTitle: { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 20 },
-  scrollContent: { padding: 15, paddingBottom: 80 },
-  
-  tokenCardContainer: { backgroundColor: 'white', padding: 20, borderRadius: 16, marginBottom: 15, alignItems: 'center', elevation: 3, borderWidth: 1.5, borderColor: '#DDD6FE' },
-  tokenGlowCircle: { width: 55, height: 55, borderRadius: 27.5, backgroundColor: '#EDE9FE', justifyContent: 'center', alignItems: 'center', marginBottom: 5 },
-  tokenAmountText: { fontSize: 34, fontWeight: 'bold', color: '#5849E2', marginVertical: 4 },
-  tokenValueBadge: { backgroundColor: '#F1F5F9', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, marginTop: 4 },
-  tokenValueText: { color: '#64748B', fontSize: 12, fontWeight: 'bold' },
+  quickCard: {
+    marginTop: 16,
+    padding: 18,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    elevation: 2
+  },
 
-  card: { backgroundColor: 'white', padding: 15, borderRadius: 12, marginBottom: 15, elevation: 2 },
-  cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#1E293B', marginBottom: 12 },
-  cardDesc: { color: '#64748B', fontSize: 13, marginBottom: 10 },
-  statsRow: { gap: 10, marginBottom: 15 },
-  statBox: { flex: 1, backgroundColor: 'white', padding: 15, borderRadius: 12, alignItems: 'center', elevation: 2 },
-  statNumber: { fontSize: 18, fontWeight: 'bold', color: '#5849E2', marginBottom: 5 },
-  statLabel: { fontSize: 12, color: '#64748B', textAlign: 'center' },
-  primaryBtn: { backgroundColor: '#5849E2', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 5 },
-  btnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
-  
-  mainCardContainer: { backgroundColor: 'white', padding: 15, borderRadius: 12, elevation: 2, alignItems: 'center' },
-  walletMainTitle: { fontSize: 16, fontWeight: 'bold', color: '#1E293B', marginBottom: 5, textAlign: 'center' },
-  walletSubtitle: { fontSize: 12, color: '#64748B', marginBottom: 15, textAlign: 'center' },
-  gridContainer: { flexWrap: 'wrap', justifyContent: 'space-between', width: '100%' },
-  gridItemBox: { width: '48%', backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 15, alignItems: 'center', marginBottom: 12, elevation: 1 },
-  gridItemImage: { width: 38, height: 38, resizeMode: 'contain', marginBottom: 10 },
-  gridItemName: { fontSize: 14, fontWeight: 'bold', color: '#1E293B', textAlign: 'center', marginBottom: 4 },
-  gridItemMin: { fontSize: 11, color: '#64748B', textAlign: 'center' },
+  cardDark: {
+    backgroundColor: '#1E293B'
+  },
 
-  input: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 12, marginBottom: 12, fontSize: 14 },
-  forgotBtn: { marginBottom: 15 },
-  forgotText: { color: '#5849E2', fontSize: 13 },
-  switchAuthBtn: { alignItems: 'center', marginTop: 15 },
-  switchAuthText: { color: '#5849E2', fontSize: 14, fontWeight: 'bold' },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#1E293B'
+  },
 
-  socialAuthContainer: { marginTop: 25, width: '100%' },
-  socialDividerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  socialDividerLine: { flex: 1, height: 1 },
-  socialDividerText: { marginHorizontal: 10, fontSize: 12, fontWeight: 'bold' },
-  socialBtnsRow: { justifyContent: 'space-between', gap: 10 },
-  socialBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8, borderWidth: 1, elevation: 1, gap: 8 },
-  socialIcon: { width: 20, height: 20, resizeMode: 'contain' },
-  socialBtnText: { fontSize: 14, fontWeight: 'bold' },
+  cardDescription: {
+    marginTop: 8,
+    color: '#64748B',
+    fontSize: 14,
+    lineHeight: 21
+  },
 
-  refCode: { fontSize: 18, fontWeight: 'bold', color: '#5849E2', textAlign: 'center', backgroundColor: '#F1F5F9', padding: 10, borderRadius: 8, letterSpacing: 2 },
-  profileHeaderCard: { backgroundColor: 'white', padding: 20, borderRadius: 12, marginBottom: 15, alignItems: 'center', elevation: 2 },
-  avatarContainer: { position: 'relative', marginBottom: 10 },
-  avatarCircle: { width: 75, height: 75, borderRadius: 37.5, backgroundColor: '#EDE9FE', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#5849E2', overflow: 'hidden' },
-  avatarText: { fontSize: 34 },
-  avatarImageStyle: { width: '100%', height: '100%', resizeMode: 'cover' },
-  cameraIconBtn: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#5849E2', width: 26, height: 26, borderRadius: 13, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: 'white' },
-  cameraIconText: { fontSize: 12 },
-  profileName: { fontSize: 18, fontWeight: 'bold', color: '#1E293B' },
-  profileEmail: { fontSize: 13, color: '#64748B', marginTop: 2, marginBottom: 15 },
-  emojisRow: { justifyContent: 'center', gap: 8 },
-  emojiOption: { backgroundColor: '#F1F5F9', padding: 8, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0' },
-  emojiItem: { fontSize: 18 },
-  menuItem: { justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', alignItems: 'center' },
-  menuText: { fontSize: 15, color: '#334155', fontWeight: 'bold' },
-  menuArrow: { color: '#94A3B8', fontSize: 16 },
-  logoutBtn: { backgroundColor: '#DC2626', padding: 14, borderRadius: 8, alignItems: 'center', marginBottom: 20 },
-  logoutBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
-  
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalContent: { backgroundColor: 'white', width: '100%', padding: 20, borderRadius: 12, elevation: 5 },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#1E293B', textAlign: 'center', marginBottom: 15 },
-  modalInput: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 12, marginBottom: 12, fontSize: 14 },
-  
-  wheelBox: { alignItems: 'center', backgroundColor: '#F8FAFC', padding: 20, borderRadius: 12, marginBottom: 15, borderWidth: 1, borderColor: '#E2E8F0' },
-  wheelResultText: { fontSize: 14, fontWeight: 'bold', color: '#5849E2', textAlign: 'center' },
+  rewardButton: {
+    marginTop: 15,
+    paddingVertical: 13,
+    borderRadius: 13,
+    alignItems: 'center',
+    backgroundColor: '#10B981'
+  },
 
-  bottomNav: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E2E8F0', height: 60, elevation: 10, zIndex: 100 },
-  navBtn: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  navText: { fontSize: 13, color: '#64748B', fontWeight: 'bold' },
-  activeNav: { color: '#5849E2' }
+  rewardButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900'
+  },
+
+  quickButtonTitle: {
+    color: '#7C3AED',
+    fontSize: 16,
+    fontWeight: '900'
+  },
+
+  quickButtonSubtitle: {
+    marginTop: 4,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700'
+  },
+
+  wheelQuickButton: {
+    marginTop: 15,
+    padding: 10,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F3FF'
+  },
+
+  quickTextBox: {
+    flex: 1,
+    marginLeft: 12
+  },
+
+  arrow: {
+    color: '#7C3AED',
+    fontSize: 30,
+    fontWeight: '700'
+  },
+
+  withdrawHomeButton: {
+    marginTop: 16,
+    paddingVertical: 15,
+    borderRadius: 15,
+    alignItems: 'center',
+    backgroundColor: '#2563EB'
+  },
+
+  withdrawHomeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900'
+  },
+
+  sectionSubtitle: {
+    marginBottom: 15,
+    color: '#64748B',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 21
+  },
+
+  earnGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between'
+  },
+
+  earnCard: {
+    width: '48%',
+    minHeight: 205,
+    marginBottom: 14,
+    padding: 14,
+    borderRadius: 18,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 2
+  },
+
+  earnIconBox: {
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+
+  gridItemImage: {
+    width: 42,
+    height: 42
+  },
+
+  earnCardTitle: {
+    marginTop: 10,
+    color: '#1E293B',
+    fontSize: 15,
+    fontWeight: '900',
+    textAlign: 'center'
+  },
+
+  earnCardDescription: {
+    marginTop: 6,
+    minHeight: 42,
+    color: '#64748B',
+    fontSize: 11,
+    lineHeight: 17,
+    textAlign: 'center'
+  },
+
+  rewardBadge: {
+    marginTop: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#F3E8FF'
+  },
+
+  rewardBadgeText: {
+    color: '#7C3AED',
+    fontSize: 11,
+    fontWeight: '900'
+  },
+
+  walletBalanceCard: {
+    padding: 20,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    elevation: 2
+  },
+
+  walletBalanceLabel: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '700'
+  },
+
+  walletBalanceValue: {
+    marginTop: 6,
+    color: '#7C3AED',
+    fontSize: 28,
+    fontWeight: '900'
+  },
+
+  walletUsdValue: {
+    marginTop: 4,
+    color: '#10B981',
+    fontSize: 15,
+    fontWeight: '800'
+  },
+
+  withdrawCard: {
+    minHeight: 75,
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 2
+  },
+
+  withdrawIcon: {
+    width: 45,
+    height: 45,
+    resizeMode: 'contain'
+  },
+
+  withdrawInfo: {
+    flex: 1,
+    marginLeft: 12
+  },
+
+  withdrawName: {
+    color: '#1E293B',
+    fontSize: 16,
+    fontWeight: '900'
+  },
+
+  withdrawHint: {
+    marginTop: 3,
+    color: '#64748B',
+    fontSize: 11
+  },
+
+  withdrawNote: {
+    marginTop: 10,
+    color: '#64748B',
+    fontSize: 12,
+    lineHeight: 19,
+    textAlign: 'center'
+  },
+
+  profileCard: {
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 2
+  },
+
+  profileAvatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3E8FF',
+    overflow: 'hidden'
+  },
+
+  profileEmail: {
+    marginTop: 12,
+    color: '#1E293B',
+    fontSize: 16,
+    fontWeight: '800'
+  },
+
+  profilePoints: {
+    marginTop: 5,
+    color: '#7C3AED',
+    fontSize: 20,
+    fontWeight: '900'
+  },
+
+  avatarButton: {
+    marginTop: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 9,
+    borderRadius: 12,
+    backgroundColor: '#F3E8FF'
+  },
+
+  avatarButtonText: {
+    color: '#7C3AED',
+    fontSize: 12,
+    fontWeight: '800'
+  },
+
+  emojiRow: {
+    marginTop: 14,
+    flexDirection: 'row',
+    gap: 8
+  },
+
+  emojiButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F1F5F9'
+  },
+
+  emojiText: {
+    fontSize: 21
+  },
+
+  settingsSection: {
+    marginTop: 16,
+    padding: 18,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    elevation: 2
+  },
+
+  settingsTitle: {
+    marginBottom: 8,
+    color: '#1E293B',
+    fontSize: 17,
+    fontWeight: '900'
+  },
+
+  settingRow: {
+    minHeight: 55,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+
+  settingIcon: {
+    width: 35,
+    fontSize: 20
+  },
+
+  settingText: {
+    flex: 1,
+    color: '#1E293B',
+    fontSize: 14,
+    fontWeight: '700'
+  },
+
+  settingValue: {
+    color: '#7C3AED',
+    fontSize: 12,
+    fontWeight: '900'
+  },
+
+  referralButton: {
+    marginTop: 16,
+    paddingVertical: 15,
+    borderRadius: 15,
+    alignItems: 'center',
+    backgroundColor: '#10B981'
+  },
+
+  referralButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900'
+  },
+
+  logoutButton: {
+    marginTop: 12,
+    paddingVertical: 15,
+    borderRadius: 15,
+    alignItems: 'center',
+    backgroundColor: '#EF4444'
+  },
+
+  logoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900'
+  },
+
+  bottomNav: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 72,
+    paddingHorizontal: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0'
+  },
+
+  bottomNavDark: {
+    backgroundColor: '#111827',
+    borderTopColor: '#334155'
+  },
+
+  navItem: {
+    flex: 1,
+    alignItems: 'center'
+  },
+
+  navIcon: {
+    fontSize: 20
+  },
+
+  navText: {
+    marginTop: 3,
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '700'
+  },
+
+  navTextActive: {
+    color: '#7C3AED',
+    fontWeight: '900'
+  },
+
+  modalOverlay: {
+    flex: 1,
+    padding: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)'
+  },
+
+  wheelModal: {
+    width: '100%',
+    maxHeight: '92%',
+    padding: 14,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF'
+  },
+
+  smallModal: {
+    width: '100%',
+    padding: 20,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF'
+  },
+
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8
+  },
+
+  modalTitle: {
+    flex: 1,
+    color: '#1E293B',
+    fontSize: 19,
+    fontWeight: '900'
+  },
+
+  closeButton: {
+    padding: 5,
+    color: '#64748B',
+    fontSize: 22,
+    fontWeight: '900'
+  },
+
+  wheelScroll: {
+    alignItems: 'center',
+    paddingBottom: 10
+  },
+
+  wheelStatus: {
+    marginBottom: 8,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '800',
+    textAlign: 'center'
+  },
+
+  wheelBox: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 4
+  },
+
+  wheelRewardText: {
+    marginTop: 5,
+    color: '#7C3AED',
+    fontSize: 14,
+    fontWeight: '900',
+    textAlign: 'center'
+  },
+
+  adSpinInfo: {
+    marginTop: 5,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '800'
+  },
+
+  adButton: {
+    width: '100%',
+    marginTop: 12,
+    paddingVertical: 13,
+    borderRadius: 14,
+    alignItems: 'center',
+    backgroundColor: '#2563EB'
+  },
+
+  disabledButton: {
+    backgroundColor: '#94A3B8'
+  },
+
+  adButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+    textAlign: 'center'
+  },
+
+  wheelNote: {
+    marginTop: 10,
+    color: '#64748B',
+    fontSize: 11,
+    textAlign: 'center'
+  },
+
+  modalDescription: {
+    marginTop: 8,
+    marginBottom: 8,
+    color: '#64748B',
+    fontSize: 13,
+    lineHeight: 20
+  },
+
+  modalOption: {
+    marginTop: 10,
+    paddingVertical: 13,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#F3E8FF'
+  },
+
+  modalOptionText: {
+    color: '#7C3AED',
+    fontSize: 15,
+    fontWeight: '900'
+  },
+
+  cancelText: {
+    marginTop: 15,
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'center'
+  },
+
+  referralCodeBox: {
+    marginTop: 15,
+    padding: 15,
+    borderRadius: 13,
+    alignItems: 'center',
+    backgroundColor: '#F3E8FF'
+  },
+
+  referralCode: {
+    color: '#7C3AED',
+    fontSize: 19,
+    fontWeight: '900',
+    letterSpacing: 1
+  }
 });
