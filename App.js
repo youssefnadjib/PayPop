@@ -4035,7 +4035,7 @@ Object.assign(styles, {
 // Image كان ناقصًا من الاستيراد في الجزء الأول.
 // نعرّفه هنا بدون الحاجة لتعديل الأسطر القديمة.
 const { Image } = require("react-native");
-
+const Wheel = require("./Wheel").default;
 const NAV_ITEMS = [
   { key: "home", icon: "⌂" },
   { key: "earn", icon: "✦" },
@@ -4077,8 +4077,12 @@ const MainNavigation = ({
   onLanguageChange,
   onDarkModeChange,
   onLogout,
+  onWheelReward,
 }) => {
   const renderScreen = () => {
+    if (activeScreen === "wheel") {
+  return <Wheel onReward={onWheelReward} />;
+    }
     if (activeScreen === "earn") {
       return (
         <EarnScreen
