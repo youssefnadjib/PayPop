@@ -1,11 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   Animated,
   StyleSheet,
+  Easing,
 } from 'react-native';
+
 import Svg, {
   G,
   Path,
@@ -17,9 +19,9 @@ import Svg, {
 const AnimatedView = Animated.createAnimatedComponent(View);
 
 const SEGMENTS = [
-  { value: 10, color: '#8B5CF6' },
-  { value: 15, color: '#06B6D4' },
-  { value: 10, color: '#EC4899' },
+  { value: 10, color: '#7C3AED' },
+  { value: 15, color: '#2563EB' },
+  { value: 10, color: '#06B6D4' },
   { value: 25, color: '#F59E0B' },
   { value: 15, color: '#7C3AED' },
   { value: 10, color: '#14B8A6' },
@@ -55,7 +57,8 @@ function describeArc(startAngle, endAngle) {
     startAngle
   );
 
-  const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+  const largeArcFlag =
+    endAngle - startAngle <= 180 ? '0' : '1';
 
   return [
     `M ${CENTER} ${CENTER}`,
@@ -91,7 +94,7 @@ export function WheelLogo({ size = 38 }) {
           cx={logoRadius}
           cy={logoRadius}
           r={logoRadius * 0.55}
-          fill="#A78BFA"
+          fill="#2563EB"
         />
 
         <Circle
@@ -112,55 +115,92 @@ export function WheelLogo({ size = 38 }) {
   );
 }
 
-export default function Wheel({ onReward }) {
-  const rotation = useRef(new Animated.Value(0)).current;
+export default function Wheel({
+  onReward,
+  disabled = false,
+}) {
+  const rotation = useRef(
+    new Animated.Value(0)
+  ).current;
+
   const animationRef = useRef(null);
+  const currentRotation = useRef(0);
+
   const [spinning, setSpinning] = useState(false);
+  const [message, setMessage] = useState(
+    'اضغط على «أدر العجلة» وجرّب حظك 🎡'
+  );
+
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop();
+      }
+    };
+  }, []);
+
+  const getReward = () => {
+    const index =
+      Math.floor(Math.random() * SEGMENTS.length);
+
+    return SEGMENTS[index].value;
+  };
+
+  const finishSpin = () => {
+    const reward = getReward();
+
+    setSpinning(false);
+    setMessage(`🎉 ربحت ${reward} PPT!`);
+
+    if (onReward) {
+      onReward(reward);
+    }
+  };
 
   const spin = () => {
-    if (spinning) return;
+    if (spinning || disabled) {
+      return;
+    }
 
     setSpinning(true);
+    setMessage('العجلة تدور... 🎡');
 
-    const extraRotation = 1440 + Math.floor(Math.random() * 720);
+    const extraRotation =
+      360 * 8 +
+      Math.floor(Math.random() * 360);
 
-    animationRef.current = Animated.timing(rotation, {
-      toValue: extraRotation,
-      duration: 5000,
-      useNativeDriver: true,
-    });
+    const nextRotation =
+      currentRotation.current + extraRotation;
+
+    currentRotation.current = nextRotation;
+
+    animationRef.current = Animated.timing(
+      rotation,
+      {
+        toValue: nextRotation,
+        duration: 5000,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }
+    );
 
     animationRef.current.start(({ finished }) => {
       if (finished) {
-        const rewards = [10, 10, 10, 15, 15, 15, 25];
-        const reward =
-          rewards[Math.floor(Math.random() * rewards.length)];
-
-        setSpinning(false);
-
-        if (onReward) {
-          onReward(reward);
-        }
+        finishSpin();
       }
     });
   };
 
   const stop = () => {
-    if (!spinning) return;
+    if (!spinning) {
+      return;
+    }
 
     if (animationRef.current) {
       animationRef.current.stop();
     }
 
-    setSpinning(false);
-
-    const rewards = [10, 10, 10, 15, 15, 15, 25];
-    const reward =
-      rewards[Math.floor(Math.random() * rewards.length)];
-
-    if (onReward) {
-      onReward(reward);
-    }
+    finishSpin();
   };
 
   const rotate = rotation.interpolate({
@@ -169,11 +209,14 @@ export default function Wheel({ onReward }) {
     extrapolate: 'extend',
   });
 
+  const buttonDisabled =
+    spinning === false && disabled;
+
   return (
     <View style={styles.container}>
 
       <Text style={styles.title}>
-        🎡 عجلة تعدين توكنات PPT
+        🎡 عجلة توكنات الحظ
       </Text>
 
       <Text style={styles.subtitle}>
@@ -183,18 +226,16 @@ export default function Wheel({ onReward }) {
       <View style={styles.wheelArea}>
 
         {/* السهم الذهبي */}
-        <Svg
-          width={45}
-          height={55}
-          style={styles.pointer}
-        >
-          <Polygon
-            points="22,52 5,12 22,20 40,12"
-            fill="#FBBF24"
-            stroke="#92400E"
-            strokeWidth="2"
-          />
-        </Svg>
+        <View style={styles.pointerContainer}>
+          <Svg width={45} height={55}>
+            <Polygon
+              points="22,52 5,12 22,20 40,12"
+              fill="#FBBF24"
+              stroke="#92400E"
+              strokeWidth="2"
+            />
+          </Svg>
+        </View>
 
         {/* العجلة */}
         <AnimatedView
@@ -205,7 +246,11 @@ export default function Wheel({ onReward }) {
             },
           ]}
         >
-          <Svg width={SIZE} height={SIZE}>
+          <Svg
+            width={SIZE}
+            height={SIZE}
+            viewBox={`0 0 ${SIZE} ${SIZE}`}
+          >
 
             {/* الحافة الذهبية */}
             <Circle
@@ -217,6 +262,14 @@ export default function Wheel({ onReward }) {
               strokeWidth="3"
             />
 
+            {/* الحافة الداخلية */}
+            <Circle
+              cx={CENTER}
+              cy={CENTER}
+              r={RADIUS + 3}
+              fill="#FDE68A"
+            />
+
             {/* القطع */}
             <G>
               {SEGMENTS.map((segment, index) => {
@@ -226,7 +279,10 @@ export default function Wheel({ onReward }) {
                 return (
                   <Path
                     key={index}
-                    d={describeArc(startAngle, endAngle)}
+                    d={describeArc(
+                      startAngle,
+                      endAngle
+                    )}
                     fill={segment.color}
                     stroke="#FFFFFF"
                     strokeWidth="2"
@@ -237,71 +293,55 @@ export default function Wheel({ onReward }) {
 
             {/* أرقام الجوائز */}
             {SEGMENTS.map((segment, index) => {
-              const angle = index * 45 + 22.5;
-              const pos = polarToCartesian(
-                CENTER,
-                CENTER,
-                88,
-                angle
-              );
+              const angle =
+                index * 45 + 22.5;
+
+              const pos =
+                polarToCartesian(
+                  CENTER,
+                  CENTER,
+                  88,
+                  angle
+                );
 
               return (
-                <SvgText
-                  key={`text-${index}`}
-                  x={pos.x}
-                  y={pos.y}
-                  fill="#FFFFFF"
-                  fontSize="19"
-                  fontWeight="bold"
-                  textAnchor="middle"
-                  alignmentBaseline="middle"
-                >
-                  {segment.value}
-                </SvgText>
+                <G key={`reward-${index}`}>
+                  <SvgText
+                    x={pos.x}
+                    y={pos.y - 3}
+                    fill="#FFFFFF"
+                    fontSize="21"
+                    fontWeight="bold"
+                    textAnchor="middle"
+                  >
+                    {segment.value}
+                  </SvgText>
+
+                  <SvgText
+                    x={pos.x}
+                    y={pos.y + 13}
+                    fill="#FDE68A"
+                    fontSize="9"
+                    fontWeight="bold"
+                    textAnchor="middle"
+                  >
+                    PPT
+                  </SvgText>
+                </G>
               );
             })}
 
-            {/* مركز PayPop */}
-            <Circle
-              cx={CENTER}
-              cy={CENTER}
-              r="38"
-              fill="#4C1D95"
-              stroke="#FBBF24"
-              strokeWidth="4"
-            />
-
-            <SvgText
-              x={CENTER}
-              y={CENTER - 2}
-              fill="#FFFFFF"
-              fontSize="13"
-              fontWeight="bold"
-              textAnchor="middle"
-            >
-              PayPop
-            </SvgText>
-
-            <SvgText
-              x={CENTER}
-              y={CENTER + 15}
-              fill="#FBBF24"
-              fontSize="11"
-              fontWeight="bold"
-              textAnchor="middle"
-            >
-              PPT
-            </SvgText>
-
-            {/* نقاط ذهبية حول الحافة */}
+            {/* نقاط حول الحافة */}
             {[...Array(16)].map((_, index) => {
               const angle = index * 22.5;
-              const pos = polarToCartesian(
-                CENTER,
-                CENTER,
-                RADIUS + 3,
-                angle
-              );
+
+              const pos =
+                polarToCartesian(
+                  CENTER,
+                  CENTER,
+                  RADIUS + 3,
+                  angle
+                );
 
               return (
                 <Circle
@@ -314,27 +354,65 @@ export default function Wheel({ onReward }) {
               );
             })}
 
+            {/* مركز PayPop */}
+            <Circle
+              cx={CENTER}
+              cy={CENTER}
+              r="40"
+              fill="#4C1D95"
+              stroke="#FBBF24"
+              strokeWidth="5"
+            />
+
+            <SvgText
+              x={CENTER}
+              y={CENTER - 2}
+              fill="#FFFFFF"
+              fontSize="14"
+              fontWeight="bold"
+              textAnchor="middle"
+            >
+              PayPop
+            </SvgText>
+
+            <SvgText
+              x={CENTER}
+              y={CENTER + 16}
+              fill="#FBBF24"
+              fontSize="11"
+              fontWeight="bold"
+              textAnchor="middle"
+            >
+              PPT
+            </SvgText>
+
           </Svg>
         </AnimatedView>
-
       </View>
 
+      {/* زر العجلة */}
       <TouchableOpacity
         style={[
           styles.spinButton,
           spinning && styles.stopButton,
+          buttonDisabled && styles.disabledButton,
         ]}
         onPress={spinning ? stop : spin}
+        disabled={buttonDisabled}
       >
         <Text style={styles.buttonText}>
-          {spinning ? '⏹ أوقف العجلة' : '🎡 أدر العجلة واكسب PPT'}
+          {spinning
+            ? '⏹ إيقاف العجلة'
+            : '🎡 أدر العجلة واكسب PPT'}
         </Text>
       </TouchableOpacity>
 
       <Text style={styles.info}>
-        {spinning
-          ? 'العجلة تدور... أوقفها عندما تريد 🎯'
-          : 'الجوائز: 10 / 15 / 25 PPT'}
+        {message}
+      </Text>
+
+      <Text style={styles.prizes}>
+        الجوائز: 10 / 15 / 25 PPT
       </Text>
 
     </View>
@@ -364,7 +442,7 @@ const styles = StyleSheet.create({
 
   wheelArea: {
     width: SIZE,
-    height: SIZE + 35,
+    height: SIZE + 45,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -374,10 +452,11 @@ const styles = StyleSheet.create({
     height: SIZE,
   },
 
-  pointer: {
+  pointerContainer: {
     position: 'absolute',
-    top: -5,
+    top: -2,
     zIndex: 20,
+    elevation: 20,
   },
 
   spinButton: {
@@ -394,6 +473,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#EF4444',
   },
 
+  disabledButton: {
+    backgroundColor: '#94A3B8',
+  },
+
   buttonText: {
     color: '#FFFFFF',
     fontSize: 15,
@@ -402,6 +485,14 @@ const styles = StyleSheet.create({
 
   info: {
     marginTop: 10,
+    color: '#7C3AED',
+    fontSize: 13,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+
+  prizes: {
+    marginTop: 5,
     color: '#64748B',
     fontSize: 12,
     textAlign: 'center',
