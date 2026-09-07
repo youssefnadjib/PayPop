@@ -4091,6 +4091,7 @@ const MainNavigation = ({
           currency={currency}
           onAddPoints={onAddPoints}
           onNavigate={onNavigate}
+            onWheel={() => onNavigate("wheel")}
         />
       );
     }
@@ -4127,6 +4128,7 @@ const MainNavigation = ({
         currency={currency}
         onNavigate={onNavigate}
         onAddPoints={onAddPoints}
+          onWheel={() => onNavigate("wheel")}
       />
     );
   };
@@ -4269,7 +4271,46 @@ const App = () => {
 
     return reward;
   };
+const handleWheelReward = async (reward) => {
+  if (!user) return;
 
+  const now = Date.now();
+  const lastSpin = Number(user.lastWheelSpin || 0);
+  const cooldown = 24 * 60 * 60 * 1000;
+
+  if (now - lastSpin < cooldown) {
+    Alert.alert(
+      "PayPop",
+      language === "ar"
+        ? "لقد استعملت عجلة الحظ اليوم. حاول غدًا."
+        : language === "fr"
+        ? "Tu as déjà utilisé la roue aujourd'hui. Réessaie demain."
+        : "You already used the wheel today. Try again tomorrow."
+    );
+    return;
+  }
+
+  const earned = Math.max(0, Number(reward || 0));
+
+  if (earned <= 0) return;
+
+  const nextUser = {
+    ...user,
+    points: Number(user.points || 0) + earned,
+    lastWheelSpin: now,
+  };
+
+  await persistUser(nextUser);
+
+  Alert.alert(
+    "🎡 PayPop",
+    language === "ar"
+      ? `مبروك! ربحت +${formatNumber(earned)} PayPop.`
+      : language === "fr"
+      ? `Bravo ! Tu as gagné +${formatNumber(earned)} PayPop.`
+      : `Congratulations! You earned +${formatNumber(earned)} PayPop.`
+  );
+};
   const claimDailyReward = async (reward) => {
     if (!user) return;
 
@@ -4454,6 +4495,7 @@ const App = () => {
         onLanguageChange={changeLanguage}
         onDarkModeChange={changeDarkMode}
         onLogout={logout}
+          onWheelReward={handleWheelReward}
       />
     </SafeAreaView>
   );
