@@ -746,3 +746,2036 @@ function LogoImage({ uri, size = 42 }) {
 // ======================================================
 // PART 1 انتهى
 // ======================================================
+
+// ======================================================
+// PART 2/6 — مكونات الواجهة الأساسية
+// ======================================================
+
+function GradientButton({
+  title,
+  onPress,
+  theme,
+  disabled = false,
+  icon = null,
+  small = false,
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        {
+          opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
+          borderRadius: small ? 14 : 18,
+          overflow: "hidden",
+        },
+      ]}
+    >
+      <LinearGradient
+        colors={[theme.primary, theme.secondary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          minHeight: small ? 44 : 54,
+          paddingHorizontal: small ? 18 : 22,
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "row",
+          gap: 8,
+        }}
+      >
+        {icon ? <Text style={{ fontSize: 18 }}>{icon}</Text> : null}
+
+        <Text
+          style={{
+            color: "#FFFFFF",
+            fontSize: small ? 14 : 16,
+            fontWeight: "900",
+          }}
+        >
+          {title}
+        </Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
+function GlassCard({ children, theme, style }) {
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: theme.card,
+          borderRadius: 22,
+          borderWidth: 1,
+          borderColor: theme.border,
+          padding: 16,
+          shadowColor: theme.shadow,
+          shadowOpacity: 0.08,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 3,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
+}
+
+function SectionTitle({ title, subtitle, theme }) {
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text
+        style={{
+          color: theme.text,
+          fontSize: 20,
+          fontWeight: "900",
+          textAlign: "left",
+        }}
+      >
+        {title}
+      </Text>
+
+      {subtitle ? (
+        <Text
+          style={{
+            color: theme.textSoft,
+            fontSize: 13,
+            marginTop: 4,
+            lineHeight: 19,
+          }}
+        >
+          {subtitle}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function AppLogo({ theme, size = 74 }) {
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size * 0.28,
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: theme.primary,
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 6 },
+        elevation: 6,
+      }}
+    >
+      <LinearGradient
+        colors={[theme.primary, theme.secondary, theme.gold]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          width: "100%",
+          height: "100%",
+          borderRadius: size * 0.28,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <View
+          style={{
+            width: size * 0.58,
+            height: size * 0.58,
+            borderRadius: size * 0.18,
+            backgroundColor: "rgba(255,255,255,0.16)",
+            borderWidth: 2,
+            borderColor: "rgba(255,255,255,0.55)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text
+            style={{
+              color: "#FFFFFF",
+              fontSize: size * 0.32,
+              fontWeight: "1000",
+            }}
+          >
+            P
+          </Text>
+        </View>
+      </LinearGradient>
+    </View>
+  );
+}
+
+function BalanceCard({
+  user,
+  theme,
+  language,
+  currency,
+}) {
+  const t = (key) => getText(language, key);
+
+  const points = Number(user?.points) || 0;
+  const usd = pointsToUSD(points);
+  const converted = convertUSD(usd, currency);
+
+  return (
+    <LinearGradient
+      colors={[theme.primaryDark, theme.primary, theme.secondary]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{
+        borderRadius: 26,
+        padding: 20,
+        marginBottom: 20,
+        overflow: "hidden",
+      }}
+    >
+      <View
+        style={{
+          position: "absolute",
+          right: -25,
+          top: -35,
+          width: 130,
+          height: 130,
+          borderRadius: 65,
+          backgroundColor: "rgba(255,255,255,0.08)",
+        }}
+      />
+
+      <Text
+        style={{
+          color: "rgba(255,255,255,0.8)",
+          fontSize: 13,
+          fontWeight: "700",
+        }}
+      >
+        {t("availableBalance")}
+      </Text>
+
+      <Text
+        style={{
+          color: "#FFFFFF",
+          fontSize: 34,
+          fontWeight: "1000",
+          marginTop: 5,
+        }}
+      >
+        {formatMoney(converted, currency)}
+      </Text>
+
+      <View
+        style={{
+          height: 1,
+          backgroundColor: "rgba(255,255,255,0.18)",
+          marginVertical: 14,
+        }}
+      />
+
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <View>
+          <Text
+            style={{
+              color: "rgba(255,255,255,0.7)",
+              fontSize: 12,
+            }}
+          >
+            PayPop Coin
+          </Text>
+
+          <Text
+            style={{
+              color: "#FFFFFF",
+              fontSize: 17,
+              fontWeight: "900",
+              marginTop: 3,
+            }}
+          >
+            {formatPoints(points)} {t("points")}
+          </Text>
+        </View>
+
+        <View
+          style={{
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 14,
+            backgroundColor: "rgba(255,255,255,0.13)",
+          }}
+        >
+          <Text
+            style={{
+              color: "#FFFFFF",
+              fontSize: 12,
+              fontWeight: "800",
+            }}
+          >
+            {t("pointsPerDollar")}
+          </Text>
+        </View>
+      </View>
+    </LinearGradient>
+  );
+}
+
+function EarnCard({
+  icon,
+  title,
+  subtitle,
+  reward,
+  buttonText,
+  onPress,
+  theme,
+  disabled = false,
+}) {
+  return (
+    <GlassCard
+      theme={theme}
+      style={{
+        marginBottom: 12,
+        padding: 14,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        <View
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 17,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: theme.cardSoft,
+            marginRight: 12,
+          }}
+        >
+          <Text style={{ fontSize: 25 }}>{icon}</Text>
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              color: theme.text,
+              fontSize: 16,
+              fontWeight: "900",
+            }}
+          >
+            {title}
+          </Text>
+
+          {subtitle ? (
+            <Text
+              style={{
+                color: theme.textSoft,
+                fontSize: 12,
+                marginTop: 3,
+              }}
+            >
+              {subtitle}
+            </Text>
+          ) : null}
+
+          {reward ? (
+            <Text
+              style={{
+                color: theme.goldDark,
+                fontSize: 12,
+                fontWeight: "900",
+                marginTop: 5,
+              }}
+            >
+              +{reward} PayPop
+            </Text>
+          ) : null}
+        </View>
+
+        <Pressable
+          onPress={onPress}
+          disabled={disabled}
+          style={({ pressed }) => ({
+            backgroundColor: disabled
+              ? theme.cardSoft
+              : theme.primary,
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+            borderRadius: 13,
+            opacity: disabled ? 0.5 : pressed ? 0.7 : 1,
+          })}
+        >
+          <Text
+            style={{
+              color: disabled ? theme.textSoft : "#FFFFFF",
+              fontSize: 12,
+              fontWeight: "900",
+            }}
+          >
+            {buttonText}
+          </Text>
+        </Pressable>
+      </View>
+    </GlassCard>
+  );
+}
+
+function InputField({
+  value,
+  onChangeText,
+  placeholder,
+  secureTextEntry = false,
+  keyboardType = "default",
+  theme,
+  autoCapitalize = "none",
+}) {
+  return (
+    <TextInput
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      placeholderTextColor={theme.textSoft}
+      secureTextEntry={secureTextEntry}
+      keyboardType={keyboardType}
+      autoCapitalize={autoCapitalize}
+      style={{
+        height: 54,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: theme.border,
+        backgroundColor: theme.input,
+        color: theme.text,
+        paddingHorizontal: 16,
+        fontSize: 15,
+        marginBottom: 12,
+      }}
+    />
+  );
+}
+
+function EmptyState({
+  icon = "📭",
+  title,
+  text,
+  theme,
+}) {
+  return (
+    <View
+      style={{
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 35,
+      }}
+    >
+      <View
+        style={{
+          width: 70,
+          height: 70,
+          borderRadius: 24,
+          backgroundColor: theme.cardSoft,
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 14,
+        }}
+      >
+        <Text style={{ fontSize: 30 }}>{icon}</Text>
+      </View>
+
+      <Text
+        style={{
+          color: theme.text,
+          fontSize: 16,
+          fontWeight: "900",
+          textAlign: "center",
+        }}
+      >
+        {title}
+      </Text>
+
+      {text ? (
+        <Text
+          style={{
+            color: theme.textSoft,
+            fontSize: 13,
+            textAlign: "center",
+            marginTop: 6,
+            maxWidth: 300,
+            lineHeight: 19,
+          }}
+        >
+          {text}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function BottomNavigation({
+  active,
+  onNavigate,
+  theme,
+  language,
+}) {
+  const t = (key) => getText(language, key);
+
+  const items = [
+    {
+      id: "home",
+      icon: "⌂",
+      label: t("home"),
+    },
+    {
+      id: "earn",
+      icon: "⚡",
+      label: t("earn"),
+    },
+    {
+      id: "wallet",
+      icon: "💰",
+      label: t("wallet"),
+    },
+    {
+      id: "profile",
+      icon: "👤",
+      label: t("profile"),
+    },
+  ];
+
+  return (
+    <View
+      style={{
+        backgroundColor: theme.nav,
+        borderTopWidth: 1,
+        borderTopColor: theme.border,
+        paddingHorizontal: 8,
+        paddingTop: 8,
+        paddingBottom: 7,
+        flexDirection: "row",
+        justifyContent: "space-around",
+      }}
+    >
+      {items.map((item) => {
+        const selected = active === item.id;
+
+        return (
+          <Pressable
+            key={item.id}
+            onPress={() => onNavigate(item.id)}
+            style={{
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: 4,
+            }}
+          >
+            <View
+              style={{
+                width: 43,
+                height: 31,
+                borderRadius: 12,
+                backgroundColor: selected
+                  ? theme.primary
+                  : "transparent",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: selected ? 19 : 18,
+                  color: selected ? "#FFFFFF" : theme.textSoft,
+                  fontWeight: "900",
+                }}
+              >
+                {item.icon}
+              </Text>
+            </View>
+
+            <Text
+              style={{
+                color: selected ? theme.primary : theme.textSoft,
+                fontSize: 10,
+                fontWeight: selected ? "900" : "700",
+                marginTop: 3,
+              }}
+            >
+              {item.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// ======================================================
+// PART 2 انتهى
+// ======================================================
+// ======================================================
+// PART 3/6 — AUTH + WELCOME
+// ======================================================
+
+function AuthScreen({
+  onLogin,
+  onSignup,
+  language,
+  theme,
+}) {
+  const t = (key) => getText(language, key);
+
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      Alert.alert(t("error"), t("invalidEmail"));
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert(t("error"), t("passwordShort"));
+      return;
+    }
+
+    if (mode === "signup" && password !== confirmPassword) {
+      Alert.alert(t("error"), t("passwordsNotMatch"));
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (mode === "login") {
+        await onLogin(cleanEmail, password);
+      } else {
+        await onSignup(
+          cleanEmail,
+          password,
+          referralCode.trim().toUpperCase()
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: theme.background,
+      }}
+    >
+      <StatusBar
+        barStyle={
+          theme === DARK_THEME
+            ? "light-content"
+            : "dark-content"
+        }
+        backgroundColor={theme.background}
+      />
+
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          padding: 22,
+          justifyContent: "center",
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View
+          style={{
+            alignItems: "center",
+            marginBottom: 30,
+          }}
+        >
+          <AppLogo theme={theme} size={82} />
+
+          <Text
+            style={{
+              color: theme.text,
+              fontSize: 30,
+              fontWeight: "1000",
+              marginTop: 15,
+            }}
+          >
+            PayPop
+          </Text>
+
+          <Text
+            style={{
+              color: theme.textSoft,
+              fontSize: 13,
+              marginTop: 6,
+              textAlign: "center",
+            }}
+          >
+            {t("welcomeSubtitle")}
+          </Text>
+        </View>
+
+        <GlassCard theme={theme}>
+          <View
+            style={{
+              flexDirection: "row",
+              backgroundColor: theme.cardSoft,
+              borderRadius: 14,
+              padding: 4,
+              marginBottom: 20,
+            }}
+          >
+            <Pressable
+              onPress={() => setMode("login")}
+              style={{
+                flex: 1,
+                paddingVertical: 11,
+                borderRadius: 11,
+                alignItems: "center",
+                backgroundColor:
+                  mode === "login"
+                    ? theme.card
+                    : "transparent",
+              }}
+            >
+              <Text
+                style={{
+                  color:
+                    mode === "login"
+                      ? theme.primary
+                      : theme.textSoft,
+                  fontWeight: "900",
+                }}
+              >
+                {t("login")}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setMode("signup")}
+              style={{
+                flex: 1,
+                paddingVertical: 11,
+                borderRadius: 11,
+                alignItems: "center",
+                backgroundColor:
+                  mode === "signup"
+                    ? theme.card
+                    : "transparent",
+              }}
+            >
+              <Text
+                style={{
+                  color:
+                    mode === "signup"
+                      ? theme.primary
+                      : theme.textSoft,
+                  fontWeight: "900",
+                }}
+              >
+                {t("signup")}
+              </Text>
+            </Pressable>
+          </View>
+
+          <InputField
+            value={email}
+            onChangeText={setEmail}
+            placeholder={t("email")}
+            keyboardType="email-address"
+            theme={theme}
+          />
+
+          <InputField
+            value={password}
+            onChangeText={setPassword}
+            placeholder={t("password")}
+            secureTextEntry
+            theme={theme}
+          />
+
+          {mode === "signup" ? (
+            <>
+              <InputField
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder={t("confirmPassword")}
+                secureTextEntry
+                theme={theme}
+              />
+
+              <InputField
+                value={referralCode}
+                onChangeText={setReferralCode}
+                placeholder={`${t("referralCode")} (${t(
+                  "optional"
+                ) || "Optional"})`}
+                autoCapitalize="characters"
+                theme={theme}
+              />
+            </>
+          ) : null}
+
+          {mode === "login" ? (
+            <Pressable
+              onPress={() =>
+                Alert.alert(
+                  t("forgotPassword"),
+                  language === "ar"
+                    ? "سيتم تفعيل استرجاع كلمة المرور عبر Firebase لاحقاً."
+                    : language === "fr"
+                    ? "La récupération du mot de passe via Firebase sera activée plus tard."
+                    : "Password recovery via Firebase will be enabled later."
+                )
+              }
+              style={{
+                alignSelf: "flex-end",
+                marginBottom: 15,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.primary,
+                  fontSize: 12,
+                  fontWeight: "800",
+                }}
+              >
+                {t("forgotPassword")}
+              </Text>
+            </Pressable>
+          ) : null}
+
+          <GradientButton
+            title={
+              loading
+                ? "..."
+                : mode === "login"
+                ? t("login")
+                : t("createAccount")
+            }
+            onPress={submit}
+            theme={theme}
+            disabled={loading}
+          />
+
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginVertical: 18,
+            }}
+          >
+            <View
+              style={{
+                flex: 1,
+                height: 1,
+                backgroundColor: theme.border,
+              }}
+            />
+
+            <Text
+              style={{
+                color: theme.textSoft,
+                fontSize: 11,
+                marginHorizontal: 10,
+              }}
+            >
+              OR
+            </Text>
+
+            <View
+              style={{
+                flex: 1,
+                height: 1,
+                backgroundColor: theme.border,
+              }}
+            />
+          </View>
+
+          <Pressable
+            onPress={() =>
+              Alert.alert(
+                "Google",
+                language === "ar"
+                  ? "سيتم ربط Google Firebase لاحقاً."
+                  : "Google Firebase authentication will be connected later."
+              )
+            }
+            style={{
+              height: 50,
+              borderRadius: 15,
+              borderWidth: 1,
+              borderColor: theme.border,
+              backgroundColor: theme.input,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 10,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.text,
+                fontWeight: "900",
+              }}
+            >
+              G  {t("google")}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() =>
+              Alert.alert(
+                "Facebook",
+                language === "ar"
+                  ? "سيتم ربط Facebook Firebase لاحقاً."
+                  : "Facebook Firebase authentication will be connected later."
+              )
+            }
+            style={{
+              height: 50,
+              borderRadius: 15,
+              borderWidth: 1,
+              borderColor: theme.border,
+              backgroundColor: theme.input,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text
+              style={{
+                color: theme.text,
+                fontWeight: "900",
+              }}
+            >
+              f  {t("facebook")}
+            </Text>
+          </Pressable>
+        </GlassCard>
+
+        <Text
+          style={{
+            color: theme.textSoft,
+            textAlign: "center",
+            fontSize: 11,
+            marginTop: 18,
+          }}
+        >
+          PayPop Coin • {APP_VERSION}
+        </Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function WelcomeScreen({
+  onContinue,
+  language,
+  theme,
+}) {
+  const t = (key) => getText(language, key);
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: theme.background,
+      }}
+    >
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={theme.primaryDark}
+      />
+
+      <LinearGradient
+        colors={[
+          theme.primaryDark,
+          theme.primary,
+          theme.secondary,
+        ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          flex: 1,
+          padding: 25,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <View
+          style={{
+            position: "absolute",
+            width: 300,
+            height: 300,
+            borderRadius: 150,
+            backgroundColor: "rgba(255,255,255,0.06)",
+            top: -80,
+            right: -80,
+          }}
+        />
+
+        <View
+          style={{
+            position: "absolute",
+            width: 220,
+            height: 220,
+            borderRadius: 110,
+            backgroundColor: "rgba(255,255,255,0.05)",
+            bottom: -70,
+            left: -60,
+          }}
+        />
+
+        <AppLogo
+          theme={{
+            ...theme,
+            primary: "#FFFFFF",
+            secondary: "#D9CFFF",
+            gold: "#FFD86A",
+          }}
+          size={110}
+        />
+
+        <Text
+          style={{
+            color: "#FFFFFF",
+            fontSize: 42,
+            fontWeight: "1000",
+            marginTop: 25,
+            letterSpacing: 1,
+          }}
+        >
+          PayPop
+        </Text>
+
+        <Text
+          style={{
+            color: "rgba(255,255,255,0.9)",
+            fontSize: 18,
+            fontWeight: "800",
+            marginTop: 10,
+            textAlign: "center",
+          }}
+        >
+          {t("welcomeToPayPop")}
+        </Text>
+
+        <Text
+          style={{
+            color: "rgba(255,255,255,0.75)",
+            fontSize: 14,
+            lineHeight: 22,
+            textAlign: "center",
+            marginTop: 12,
+            maxWidth: 320,
+          }}
+        >
+          {t("welcomeSubtitle")}
+        </Text>
+
+        <View
+          style={{
+            flexDirection: "row",
+            marginTop: 28,
+            gap: 10,
+          }}
+        >
+          {[
+            ["💰", t("earnMore")],
+            ["🎁", t("secureRewards")],
+            ["⚡", "PayPop Coin"],
+          ].map(([icon, label]) => (
+            <View
+              key={label}
+              style={{
+                alignItems: "center",
+                paddingHorizontal: 10,
+              }}
+            >
+              <Text style={{ fontSize: 25 }}>{icon}</Text>
+
+              <Text
+                style={{
+                  color: "#FFFFFF",
+                  fontSize: 10,
+                  fontWeight: "800",
+                  marginTop: 6,
+                  textAlign: "center",
+                }}
+              >
+                {label}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <Pressable
+          onPress={onContinue}
+          style={({ pressed }) => ({
+            marginTop: 42,
+            width: "100%",
+            maxWidth: 330,
+            height: 56,
+            borderRadius: 18,
+            backgroundColor: "#FFFFFF",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: pressed ? 0.85 : 1,
+          })}
+        >
+          <Text
+            style={{
+              color: theme.primaryDark,
+              fontSize: 16,
+              fontWeight: "1000",
+            }}
+          >
+            {t("continue")} →
+          </Text>
+        </Pressable>
+      </LinearGradient>
+    </SafeAreaView>
+  );
+}
+
+// ======================================================
+// PART 3 انتهى
+// ======================================================
+// ======================================================
+// PART 4/6 — HOME + EARN
+// ======================================================
+
+function HomeScreen({
+  user,
+  language,
+  currency,
+  theme,
+  onNavigate,
+  onClaimDaily,
+  onWheel,
+  onWatchVideo,
+  onShare,
+}) {
+  const t = (key) => getText(language, key);
+
+  const dailyClaimed =
+    user?.dailyReward?.lastClaim &&
+    !canClaimAfter24Hours(user.dailyReward.lastClaim);
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: theme.background,
+      }}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          padding: 18,
+          paddingBottom: 25,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 18,
+          }}
+        >
+          <View>
+            <Text
+              style={{
+                color: theme.textSoft,
+                fontSize: 13,
+                fontWeight: "700",
+              }}
+            >
+              {t("welcome")}
+            </Text>
+
+            <Text
+              style={{
+                color: theme.text,
+                fontSize: 24,
+                fontWeight: "1000",
+                marginTop: 2,
+              }}
+            >
+              PayPop 👋
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => onNavigate("profile")}
+            style={{
+              width: 45,
+              height: 45,
+              borderRadius: 15,
+              backgroundColor: theme.card,
+              borderWidth: 1,
+              borderColor: theme.border,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ fontSize: 20 }}>👤</Text>
+          </Pressable>
+        </View>
+
+        <BalanceCard
+          user={user}
+          theme={theme}
+          language={language}
+          currency={currency}
+        />
+
+        <SectionTitle
+          title={t("earnNow")}
+          subtitle={t("welcomeSubtitle")}
+          theme={theme}
+        />
+
+        <EarnCard
+          icon="🎁"
+          title={t("dailyReward")}
+          subtitle={
+            dailyClaimed
+              ? t("dailyAvailableTomorrow")
+              : "Day " +
+                ((Number(user?.dailyReward?.day) || 0) + 1)
+          }
+          reward={
+            DAILY_REWARDS[
+              Math.min(
+                Number(user?.dailyReward?.day) || 0,
+                DAILY_REWARDS.length - 1
+              )
+            ]
+          }
+          buttonText={
+            dailyClaimed ? t("claimed") : t("claim")
+          }
+          disabled={dailyClaimed}
+          onPress={onClaimDaily}
+          theme={theme}
+        />
+
+        <EarnCard
+          icon="🎡"
+          title={t("wheel")}
+          subtitle={
+            language === "ar"
+              ? "اربح نقاط من عجلة الحظ"
+              : language === "fr"
+              ? "Gagnez des points avec la roue"
+              : "Win points with the lucky wheel"
+          }
+          reward="10–250"
+          buttonText={t("spin")}
+          onPress={onWheel}
+          theme={theme}
+        />
+
+        <EarnCard
+          icon="📺"
+          title={t("watchVideo")}
+          subtitle={
+            language === "ar"
+              ? "شاهد فيديو واحصل على نقاط"
+              : language === "fr"
+              ? "Regardez une vidéo et gagnez des points"
+              : "Watch a video and earn points"
+          }
+          reward="100"
+          buttonText={t("watch")}
+          onPress={onWatchVideo}
+          theme={theme}
+        />
+
+        <EarnCard
+          icon="🎮"
+          title={t("games")}
+          subtitle={
+            language === "ar"
+              ? "ألعاب ومكافآت قادمة"
+              : language === "fr"
+              ? "Jeux et récompenses bientôt"
+              : "Games and rewards coming soon"
+          }
+          reward="250"
+          buttonText={t("continue")}
+          onPress={() =>
+            Alert.alert(
+              t("games"),
+              language === "ar"
+                ? "قسم الألعاب سيكون متاحاً قريباً."
+                : language === "fr"
+                ? "La section jeux sera bientôt disponible."
+                : "The games section will be available soon."
+            )
+          }
+          theme={theme}
+        />
+
+        <EarnCard
+          icon="👥"
+          title={t("inviteFriends")}
+          subtitle={
+            language === "ar"
+              ? "ادعُ أصدقاءك واربح نقاطاً"
+              : language === "fr"
+              ? "Invitez vos amis et gagnez des points"
+              : "Invite friends and earn points"
+          }
+          reward="250+"
+          buttonText={t("invite")}
+          onPress={onShare}
+          theme={theme}
+        />
+
+        <EarnCard
+          icon="⭐"
+          title={t("specialReward")}
+          subtitle={
+            language === "ar"
+              ? "مكافآت خاصة للمستخدمين النشطين"
+              : language === "fr"
+              ? "Récompenses spéciales pour les utilisateurs actifs"
+              : "Special rewards for active users"
+          }
+          reward="500"
+          buttonText={t("continue")}
+          onPress={() =>
+            Alert.alert(
+              t("specialReward"),
+              language === "ar"
+                ? "المكافآت الخاصة ستكون متاحة قريباً."
+                : language === "fr"
+                ? "Les récompenses spéciales seront bientôt disponibles."
+                : "Special rewards will be available soon."
+            )
+          }
+          theme={theme}
+        />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function EarnScreen({
+  user,
+  language,
+  currency,
+  theme,
+  onClaimDaily,
+  onWheel,
+  onWatchVideo,
+  onShare,
+}) {
+  const t = (key) => getText(language, key);
+
+  const dailyClaimed =
+    user?.dailyReward?.lastClaim &&
+    !canClaimAfter24Hours(user.dailyReward.lastClaim);
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: theme.background,
+      }}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          padding: 18,
+          paddingBottom: 25,
+        }}
+      >
+        <Text
+          style={{
+            color: theme.text,
+            fontSize: 27,
+            fontWeight: "1000",
+            marginBottom: 5,
+          }}
+        >
+          {t("earn")}
+        </Text>
+
+        <Text
+          style={{
+            color: theme.textSoft,
+            fontSize: 13,
+            marginBottom: 18,
+          }}
+        >
+          {t("welcomeSubtitle")}
+        </Text>
+
+        <BalanceCard
+          user={user}
+          theme={theme}
+          language={language}
+          currency={currency}
+        />
+
+        <SectionTitle
+          title={t("dailyReward")}
+          subtitle={t("pointsPerDollar")}
+          theme={theme}
+        />
+
+        <GlassCard
+          theme={theme}
+          style={{
+            marginBottom: 18,
+            overflow: "hidden",
+          }}
+        >
+          <LinearGradient
+            colors={[
+              theme.primary,
+              theme.secondary,
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              margin: -16,
+              marginBottom: 15,
+              padding: 20,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 34 }}>🎁</Text>
+
+            <Text
+              style={{
+                color: "#FFFFFF",
+                fontSize: 22,
+                fontWeight: "1000",
+                marginTop: 8,
+              }}
+            >
+              +{DAILY_REWARDS[
+                Math.min(
+                  Number(user?.dailyReward?.day) || 0,
+                  DAILY_REWARDS.length - 1
+                )
+              ]} PayPop
+            </Text>
+          </LinearGradient>
+
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginBottom: 15,
+            }}
+          >
+            {DAILY_REWARDS.map((reward, index) => {
+              const currentDay =
+                Number(user?.dailyReward?.day) || 0;
+
+              const active = index <= currentDay;
+
+              return (
+                <View
+                  key={`${reward}-${index}`}
+                  style={{
+                    alignItems: "center",
+                    flex: 1,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 29,
+                      height: 29,
+                      borderRadius: 10,
+                      backgroundColor: active
+                        ? theme.gold
+                        : theme.cardSoft,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: active
+                          ? "#FFFFFF"
+                          : theme.textSoft,
+                        fontSize: 10,
+                        fontWeight: "900",
+                      }}
+                    >
+                      {index + 1}
+                    </Text>
+                  </View>
+
+                  <Text
+                    style={{
+                      color: active
+                        ? theme.text
+                        : theme.textSoft,
+                      fontSize: 8,
+                      fontWeight: "800",
+                      marginTop: 4,
+                    }}
+                  >
+                    {reward}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+
+          <GradientButton
+            title={
+              dailyClaimed
+                ? t("claimed")
+                : t("claim")
+            }
+            onPress={onClaimDaily}
+            disabled={dailyClaimed}
+            theme={theme}
+          />
+        </GlassCard>
+
+        <SectionTitle
+          title={t("earnNow")}
+          theme={theme}
+        />
+
+        <EarnCard
+          icon="🎡"
+          title={t("wheel")}
+          subtitle={
+            language === "ar"
+              ? "دورة مجانية كل 24 ساعة"
+              : language === "fr"
+              ? "Un tour gratuit toutes les 24 heures"
+              : "One free spin every 24 hours"
+          }
+          reward="10–250"
+          buttonText={t("spin")}
+          onPress={onWheel}
+          theme={theme}
+        />
+
+        <EarnCard
+          icon="📺"
+          title={t("watchVideo")}
+          subtitle={
+            language === "ar"
+              ? "شاهد فيديو قصير"
+              : language === "fr"
+              ? "Regardez une courte vidéo"
+              : "Watch a short video"
+          }
+          reward="100"
+          buttonText={t("watch")}
+          onPress={onWatchVideo}
+          theme={theme}
+        />
+
+        <EarnCard
+          icon="👥"
+          title={t("inviteFriends")}
+          subtitle={
+            language === "ar"
+              ? "شارك رابطك مع أصدقائك"
+              : language === "fr"
+              ? "Partagez votre lien avec vos amis"
+              : "Share your link with friends"
+          }
+          reward="250+"
+          buttonText={t("share")}
+          onPress={onShare}
+          theme={theme}
+        />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ======================================================
+// PART 4 انتهى
+// ======================================================
+                      // ======================================================
+// PART 5/6 — WALLET + WITHDRAWAL
+// ======================================================
+
+function WalletScreen({
+  user,
+  language,
+  currency,
+  theme,
+  onWithdraw,
+}) {
+  const t = (key) => getText(language, key);
+
+  const [selectedMethod, setSelectedMethod] = useState(
+    WITHDRAW_METHODS[0].id
+  );
+  const [details, setDetails] = useState("");
+  const [amountUSD, setAmountUSD] = useState("");
+
+  const points = Number(user?.points) || 0;
+  const usdBalance = pointsToUSD(points);
+
+  const selected =
+    WITHDRAW_METHODS.find(
+      (method) => method.id === selectedMethod
+    ) || WITHDRAW_METHODS[0];
+
+  const amountNumber = Number(amountUSD) || 0;
+  const amountPoints = Math.round(
+    amountNumber * POINTS_PER_USD
+  );
+
+  const convertedAmount = convertUSD(
+    amountNumber,
+    currency
+  );
+
+  const submit = () => {
+    if (amountNumber <= 0) {
+      Alert.alert(
+        t("warning"),
+        language === "ar"
+          ? "أدخل مبلغ السحب."
+          : language === "fr"
+          ? "Entrez un montant."
+          : "Enter a withdrawal amount."
+      );
+      return;
+    }
+
+    if (amountPoints < MIN_WITHDRAW_POINTS) {
+      Alert.alert(
+        t("warning"),
+        `${t("minimumIs")} ${formatMoney(
+          pointsToUSD(MIN_WITHDRAW_POINTS),
+          "USD"
+        )}`
+      );
+      return;
+    }
+
+    if (amountPoints > points) {
+      Alert.alert(
+        t("warning"),
+        t("insufficientBalance")
+      );
+      return;
+    }
+
+    if (!details.trim()) {
+      Alert.alert(
+        t("warning"),
+        language === "ar"
+          ? "أدخل معلومات الحساب."
+          : language === "fr"
+          ? "Entrez les informations du compte."
+          : "Enter account details."
+      );
+      return;
+    }
+
+    onWithdraw({
+      method: selected,
+      details: details.trim(),
+      amountUSD: amountNumber,
+      points: amountPoints,
+    });
+
+    setDetails("");
+    setAmountUSD("");
+  };
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: theme.background,
+      }}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          padding: 18,
+          paddingBottom: 30,
+        }}
+      >
+        <Text
+          style={{
+            color: theme.text,
+            fontSize: 27,
+            fontWeight: "1000",
+            marginBottom: 5,
+          }}
+        >
+          {t("walletTitle")}
+        </Text>
+
+        <Text
+          style={{
+            color: theme.textSoft,
+            fontSize: 13,
+            marginBottom: 18,
+          }}
+        >
+          {t("minWithdrawText")}
+        </Text>
+
+        <BalanceCard
+          user={user}
+          theme={theme}
+          language={language}
+          currency={currency}
+        />
+
+        <GlassCard
+          theme={theme}
+          style={{ marginBottom: 15 }}
+        >
+          <SectionTitle
+            title={t("selectMethod")}
+            theme={theme}
+          />
+
+          <View style={{ gap: 10 }}>
+            {WITHDRAW_METHODS.map((method) => {
+              const active =
+                selectedMethod === method.id;
+
+              return (
+                <Pressable
+                  key={method.id}
+                  onPress={() =>
+                    setSelectedMethod(method.id)
+                  }
+                  style={{
+                    minHeight: 65,
+                    borderRadius: 17,
+                    borderWidth: active ? 2 : 1,
+                    borderColor: active
+                      ? theme.primary
+                      : theme.border,
+                    backgroundColor: active
+                      ? theme.cardSoft
+                      : theme.input,
+                    paddingHorizontal: 12,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <LogoImage
+                    uri={method.logo}
+                    size={42}
+                  />
+
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text
+                      style={{
+                        color: theme.text,
+                        fontSize: 15,
+                        fontWeight: "900",
+                      }}
+                    >
+                      {method.name}
+                    </Text>
+
+                    <Text
+                      style={{
+                        color: theme.textSoft,
+                        fontSize: 11,
+                        marginTop: 3,
+                      }}
+                    >
+                      {getFieldLabel(
+                        method,
+                        language
+                      )}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={{
+                      width: 21,
+                      height: 21,
+                      borderRadius: 11,
+                      borderWidth: 2,
+                      borderColor: active
+                        ? theme.primary
+                        : theme.border,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {active ? (
+                      <View
+                        style={{
+                          width: 11,
+                          height: 11,
+                          borderRadius: 6,
+                          backgroundColor:
+                            theme.primary,
+                        }}
+                      />
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </GlassCard>
+
+        <GlassCard
+          theme={theme}
+          style={{ marginBottom: 15 }}
+        >
+          <SectionTitle
+            title={t("enterDetails")}
+            theme={theme}
+          />
+
+          <Text
+            style={{
+              color: theme.textSoft,
+              fontSize: 12,
+              marginBottom: 7,
+            }}
+          >
+            {getFieldLabel(selected, language)}
+          </Text>
+
+          <InputField
+            value={details}
+            onChangeText={setDetails}
+            placeholder={selected.placeholder}
+            keyboardType={
+              selected.field === "email"
+                ? "email-address"
+                : "default"
+            }
+            autoCapitalize={
+              selected.field === "email"
+                ? "none"
+                : "characters"
+            }
+            theme={theme}
+          />
+
+          <Text
+            style={{
+              color: theme.textSoft,
+              fontSize: 12,
+              marginBottom: 7,
+            }}
+          >
+            {t("amount")} (USD)
+          </Text>
+
+          <InputField
+            value={amountUSD}
+            onChangeText={setAmountUSD}
+            placeholder="10"
+            keyboardType="decimal-pad"
+            theme={theme}
+          />
+
+          <View
+            style={{
+              backgroundColor: theme.cardSoft,
+              borderRadius: 15,
+              padding: 13,
+              marginBottom: 15,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: 7,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.textSoft,
+                  fontSize: 12,
+                }}
+              >
+                {t("amount")}
+              </Text>
+
+              <Text
+                style={{
+                  color: theme.text,
+                  fontWeight: "900",
+                }}
+              >
+                {formatMoney(
+                  amountNumber,
+                  "USD"
+                )}
+              </Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.textSoft,
+                  fontSize: 12,
+                }}
+              >
+                {t("currency")}
+              </Text>
+
+              <Text
+                style={{
+                  color: theme.primary,
+                  fontWeight: "900",
+                }}
+              >
+                {formatMoney(
+                  convertedAmount,
+                  currency
+                )}
+              </Text>
+            </View>
+          </View>
+
+          <GradientButton
+            title={t("submitWithdrawal")}
+            onPress={submit}
+            theme={theme}
+            icon="💸"
+          />
+        </GlassCard>
+
+        <SectionTitle
+          title={t("withdrawalHistory")}
+          theme={theme}
+        />
+
+        {user?.withdrawals?.length ? (
+          [...user.withdrawals]
+            .reverse()
+            .map((item) => (
+              <GlassCard
+                key={item.id}
+                theme={theme}
+                style={{
+                  marginBottom: 10,
+                  padding: 14,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <LogoImage
+                    uri={item.logo}
+                    size={42}
+                  />
+
+                  <View
+                    style={{
+                      flex: 1,
+                      marginLeft: 12,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: theme.text,
+                        fontSize: 14,
+                        fontWeight: "900",
+                      }}
+                    >
+                      {item.method}
+                    </Text>
+
+                    <Text
+                      style={{
+                        color: theme.textSoft,
+                        fontSize: 11,
+                        marginTop: 3,
+                      }}
+                    >
+                      {new Date(
+                        item.createdAt
+                      ).toLocaleDateString()}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={{
+                      alignItems: "flex-end",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: theme.text,
+                        fontWeight: "900",
+                      }}
+                    >
+                      -{formatPoints(item.points)}
+                    </Text>
+
+                    <Text
+                      style={{
+                        color: theme.warning,
+                        fontSize: 10,
+                        fontWeight: "800",
+                        marginTop: 4,
+                      }}
+                    >
+                      {getStatusLabel(
+                        item.status,
+                        language
+                      )}
+                    </Text>
+                  </View>
+                </View>
+              </GlassCard>
+            ))
+        ) : (
+          <GlassCard theme={theme}>
+            <EmptyState
+              icon="💸"
+              title={t("noWithdrawals")}
+              theme={theme}
+            />
+          </GlassCard>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ======================================================
+// PART 5 انتهى
+// ======================================================
