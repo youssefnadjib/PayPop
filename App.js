@@ -4459,7 +4459,7 @@ const handleWheelReward = async (reward) => {
     return (
       <AuthScreen
         language={language}
-        onLoginSuccess={handleLoginSuccess}
+        onLogin={handleLoginSuccess}
       />
     );
   }
