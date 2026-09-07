@@ -2779,3 +2779,1650 @@ function WalletScreen({
 // ======================================================
 // PART 5 انتهى
 // ======================================================
+
+                   // ======================================================
+// PART 6/6 — PROFILE + REFERRAL + HELP + APP
+// ======================================================
+
+function ProfileScreen({
+  user,
+  language,
+  currency,
+  darkMode,
+  theme,
+  onLanguageChange,
+  onCurrencyChange,
+  onDarkModeChange,
+  onLogout,
+  onUpdateUser,
+}) {
+  const t = (key) => getText(language, key);
+
+  const [photoLoading, setPhotoLoading] = useState(false);
+
+  const pickPhoto = async () => {
+    try {
+      setPhotoLoading(true);
+
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert(
+          t("warning"),
+          language === "ar"
+            ? "يجب السماح للتطبيق بالوصول إلى الصور."
+            : language === "fr"
+            ? "L'accès aux photos est nécessaire."
+            : "Photo library permission is required."
+        );
+        return;
+      }
+
+      const result =
+        await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.85,
+        });
+
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        await onUpdateUser({
+          photo: result.assets[0].uri,
+        });
+      }
+    } catch (error) {
+      Alert.alert(t("error"), String(error?.message || error));
+    } finally {
+      setPhotoLoading(false);
+    }
+  };
+
+  const shareReferral = async () => {
+    try {
+      await Share.share({
+        message:
+          language === "ar"
+            ? `انضم إلى PayPop واربح نقاطاً! استخدم كود الإحالة الخاص بي: ${user?.referralCode || ""}`
+            : language === "fr"
+            ? `Rejoignez PayPop et gagnez des points ! Utilisez mon code : ${user?.referralCode || ""}`
+            : `Join PayPop and earn points! Use my referral code: ${user?.referralCode || ""}`,
+      });
+    } catch (error) {
+      // Ignore share cancellation.
+    }
+  };
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: theme.background,
+      }}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          padding: 18,
+          paddingBottom: 30,
+        }}
+      >
+        <Text
+          style={{
+            color: theme.text,
+            fontSize: 27,
+            fontWeight: "1000",
+            marginBottom: 18,
+          }}
+        >
+          {t("profileTitle")}
+        </Text>
+
+        <GlassCard
+          theme={theme}
+          style={{
+            alignItems: "center",
+            marginBottom: 15,
+          }}
+        >
+          <Pressable
+            onPress={pickPhoto}
+            disabled={photoLoading}
+          >
+            {user?.photo ? (
+              <Image
+                source={{ uri: user.photo }}
+                style={{
+                  width: 92,
+                  height: 92,
+                  borderRadius: 32,
+                }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: 92,
+                  height: 92,
+                  borderRadius: 32,
+                  overflow: "hidden",
+                }}
+              >
+                <LinearGradient
+                  colors={[
+                    theme.primary,
+                    theme.secondary,
+                    theme.gold,
+                  ]}
+                  style={{
+                    flex: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#FFFFFF",
+                      fontSize: 32,
+                      fontWeight: "1000",
+                    }}
+                  >
+                    {getInitials(user?.email)}
+                  </Text>
+                </LinearGradient>
+              </View>
+            )}
+          </Pressable>
+
+          <Text
+            style={{
+              color: theme.text,
+              fontSize: 18,
+              fontWeight: "1000",
+              marginTop: 12,
+            }}
+          >
+            {user?.name || user?.email || "PayPop User"}
+          </Text>
+
+          <Text
+            style={{
+              color: theme.textSoft,
+              fontSize: 12,
+              marginTop: 4,
+            }}
+          >
+            {user?.email}
+          </Text>
+
+          <Pressable
+            onPress={pickPhoto}
+            style={{
+              marginTop: 12,
+              paddingHorizontal: 15,
+              paddingVertical: 9,
+              borderRadius: 13,
+              backgroundColor: theme.cardSoft,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.primary,
+                fontSize: 12,
+                fontWeight: "900",
+              }}
+            >
+              {t("changePhoto")}
+            </Text>
+          </Pressable>
+        </GlassCard>
+
+        <GlassCard
+          theme={theme}
+          style={{ marginBottom: 15 }}
+        >
+          <SectionTitle
+            title={t("referral")}
+            theme={theme}
+          />
+
+          <Text
+            style={{
+              color: theme.textSoft,
+              fontSize: 12,
+              marginBottom: 7,
+            }}
+          >
+            {t("referralCode")}
+          </Text>
+
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <View
+              style={{
+                flex: 1,
+                height: 50,
+                borderRadius: 15,
+                backgroundColor: theme.cardSoft,
+                justifyContent: "center",
+                paddingHorizontal: 15,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.text,
+                  fontSize: 17,
+                  fontWeight: "1000",
+                  letterSpacing: 1,
+                }}
+              >
+                {user?.referralCode || "PPUSER"}
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={shareReferral}
+              style={{
+                width: 50,
+                height: 50,
+                borderRadius: 15,
+                backgroundColor: theme.primary,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ fontSize: 20 }}>↗</Text>
+            </Pressable>
+          </View>
+
+          <View
+            style={{
+              flexDirection: "row",
+              marginTop: 14,
+              gap: 10,
+            }}
+          >
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: theme.cardSoft,
+                borderRadius: 15,
+                padding: 13,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.textSoft,
+                  fontSize: 11,
+                }}
+              >
+                {t("referrals")}
+              </Text>
+
+              <Text
+                style={{
+                  color: theme.text,
+                  fontSize: 21,
+                  fontWeight: "1000",
+                  marginTop: 4,
+                }}
+              >
+                {Number(user?.referralsCount) || 0}
+              </Text>
+            </View>
+
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: theme.cardSoft,
+                borderRadius: 15,
+                padding: 13,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.textSoft,
+                  fontSize: 11,
+                }}
+              >
+                {t("referralEarnings")}
+              </Text>
+
+              <Text
+                style={{
+                  color: theme.goldDark,
+                  fontSize: 17,
+                  fontWeight: "1000",
+                  marginTop: 4,
+                }}
+              >
+                {formatPoints(
+                  Number(user?.referralEarnings) || 0
+                )}
+              </Text>
+            </View>
+          </View>
+        </GlassCard>
+
+        <GlassCard
+          theme={theme}
+          style={{ marginBottom: 15 }}
+        >
+          <SectionTitle
+            title={t("language")}
+            theme={theme}
+          />
+
+          {[
+            ["ar", t("arabic")],
+            ["fr", t("french")],
+            ["en", t("english")],
+          ].map(([code, label]) => {
+            const active = language === code;
+
+            return (
+              <Pressable
+                key={code}
+                onPress={() => onLanguageChange(code)}
+                style={{
+                  height: 48,
+                  borderRadius: 14,
+                  backgroundColor: active
+                    ? theme.cardSoft
+                    : "transparent",
+                  paddingHorizontal: 12,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 5,
+                }}
+              >
+                <Text
+                  style={{
+                    flex: 1,
+                    color: active
+                      ? theme.primary
+                      : theme.text,
+                    fontSize: 14,
+                    fontWeight: active ? "900" : "700",
+                  }}
+                >
+                  {label}
+                </Text>
+
+                {active ? (
+                  <Text
+                    style={{
+                      color: theme.primary,
+                      fontWeight: "1000",
+                    }}
+                  >
+                    ✓
+                  </Text>
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </GlassCard>
+
+        <GlassCard
+          theme={theme}
+          style={{ marginBottom: 15 }}
+        >
+          <SectionTitle
+            title={t("currency")}
+            theme={theme}
+          />
+
+          {Object.values(CURRENCIES).map((item) => {
+            const active = currency === item.code;
+
+            return (
+              <Pressable
+                key={item.code}
+                onPress={() =>
+                  onCurrencyChange(item.code)
+                }
+                style={{
+                  height: 52,
+                  borderRadius: 14,
+                  backgroundColor: active
+                    ? theme.cardSoft
+                    : "transparent",
+                  paddingHorizontal: 13,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 5,
+                }}
+              >
+                <Text
+                  style={{
+                    width: 40,
+                    color: theme.primary,
+                    fontSize: 16,
+                    fontWeight: "1000",
+                  }}
+                >
+                  {item.symbol}
+                </Text>
+
+                <Text
+                  style={{
+                    flex: 1,
+                    color: theme.text,
+                    fontSize: 14,
+                    fontWeight: "800",
+                  }}
+                >
+                  {language === "ar"
+                    ? item.code === "USD"
+                      ? t("usdCurrency")
+                      : item.code === "DZD"
+                      ? t("dzdCurrency")
+                      : t("eurCurrency")
+                    : item.name}
+                </Text>
+
+                {active ? (
+                  <Text
+                    style={{
+                      color: theme.primary,
+                      fontWeight: "1000",
+                    }}
+                  >
+                    ✓
+                  </Text>
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </GlassCard>
+
+        <GlassCard
+          theme={theme}
+          style={{ marginBottom: 15 }}
+        >
+          <Pressable
+            onPress={() => onDarkModeChange(!darkMode)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              minHeight: 52,
+            }}
+          >
+            <Text style={{ fontSize: 22 }}>
+              {darkMode ? "🌙" : "☀️"}
+            </Text>
+
+            <Text
+              style={{
+                flex: 1,
+                color: theme.text,
+                fontSize: 14,
+                fontWeight: "900",
+                marginLeft: 12,
+              }}
+            >
+              {t("darkMode")}
+            </Text>
+
+            <View
+              style={{
+                width: 48,
+                height: 28,
+                borderRadius: 14,
+                backgroundColor: darkMode
+                  ? theme.primary
+                  : theme.cardSoft,
+                padding: 3,
+                justifyContent: "center",
+              }}
+            >
+              <View
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 11,
+                  backgroundColor: "#FFFFFF",
+                  alignSelf: darkMode
+                    ? "flex-end"
+                    : "flex-start",
+                }}
+              />
+            </View>
+          </Pressable>
+        </GlassCard>
+
+        <GlassCard
+          theme={theme}
+          style={{ marginBottom: 15 }}
+        >
+          <Pressable
+            onPress={openWhatsApp}
+            style={{
+              minHeight: 58,
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                width: 43,
+                height: 43,
+                borderRadius: 14,
+                backgroundColor: "#25D366",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ fontSize: 21 }}>✆</Text>
+            </View>
+
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text
+                style={{
+                  color: theme.text,
+                  fontSize: 14,
+                  fontWeight: "900",
+                }}
+              >
+                {t("support")}
+              </Text>
+
+              <Text
+                style={{
+                  color: theme.textSoft,
+                  fontSize: 11,
+                  marginTop: 3,
+                }}
+              >
+                {t("supportText")}
+              </Text>
+            </View>
+
+            <Text
+              style={{
+                color: theme.primary,
+                fontSize: 20,
+                fontWeight: "900",
+              }}
+            >
+              ›
+            </Text>
+          </Pressable>
+        </GlassCard>
+
+        <GlassCard
+          theme={theme}
+          style={{ marginBottom: 15 }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              minHeight: 50,
+            }}
+          >
+            <Text style={{ fontSize: 22 }}>ℹ️</Text>
+
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text
+                style={{
+                  color: theme.text,
+                  fontSize: 14,
+                  fontWeight: "900",
+                }}
+              >
+                {t("about")}
+              </Text>
+
+              <Text
+                style={{
+                  color: theme.textSoft,
+                  fontSize: 11,
+                  marginTop: 3,
+                }}
+              >
+                {t("paypopCoin")} • {t("version")}{" "}
+                {APP_VERSION}
+              </Text>
+            </View>
+          </View>
+        </GlassCard>
+
+        <Pressable
+          onPress={onLogout}
+          style={{
+            minHeight: 54,
+            borderRadius: 17,
+            borderWidth: 1,
+            borderColor: theme.danger,
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 2,
+          }}
+        >
+          <Text
+            style={{
+              color: theme.danger,
+              fontSize: 15,
+              fontWeight: "900",
+            }}
+          >
+            {t("logout")}
+          </Text>
+        </Pressable>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function HelpCenterScreen({
+  language,
+  theme,
+  onBack,
+}) {
+  const t = (key) => getText(language, key);
+
+  const items =
+    language === "ar"
+      ? [
+          [
+            "كيف أربح النقاط؟",
+            "يمكنك الربح من المكافأة اليومية وعجلة الحظ ومشاهدة الفيديو ودعوة الأصدقاء.",
+          ],
+          [
+            "ما قيمة النقاط؟",
+            "كل 100,000 نقطة من PayPop Coin تساوي 1 دولار أمريكي.",
+          ],
+          [
+            "ما الحد الأدنى للسحب؟",
+            "الحد الأدنى للسحب هو 1,000,000 نقطة، أي 10 دولارات.",
+          ],
+          [
+            "متى تصل عملية السحب؟",
+            "طلبات السحب تكون قيد المراجعة قبل إتمامها.",
+          ],
+        ]
+      : language === "fr"
+      ? [
+          [
+            "Comment gagner des points ?",
+            "Gagnez avec la récompense quotidienne, la roue, les vidéos et les invitations.",
+          ],
+          [
+            "Quelle est la valeur des points ?",
+            "100 000 points PayPop Coin valent 1 dollar américain.",
+          ],
+          [
+            "Quel est le retrait minimum ?",
+            "Le minimum est de 1 000 000 points, soit 10 dollars.",
+          ],
+          [
+            "Quand le retrait arrive-t-il ?",
+            "Les demandes sont vérifiées avant leur traitement.",
+          ],
+        ]
+      : [
+          [
+            "How do I earn points?",
+            "Earn through daily rewards, the lucky wheel, videos and referrals.",
+          ],
+          [
+            "What are the points worth?",
+            "100,000 PayPop Coin points equal 1 US dollar.",
+          ],
+          [
+            "What is the minimum withdrawal?",
+            "The minimum is 1,000,000 points, equal to $10.",
+          ],
+          [
+            "When will my withdrawal arrive?",
+            "Withdrawal requests are reviewed before processing.",
+          ],
+        ];
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: theme.background,
+      }}
+    >
+      <ScrollView
+        contentContainerStyle={{
+          padding: 18,
+          paddingBottom: 30,
+        }}
+      >
+        <Pressable
+          onPress={onBack}
+          style={{
+            alignSelf: "flex-start",
+            marginBottom: 15,
+          }}
+        >
+          <Text
+            style={{
+              color: theme.primary,
+              fontWeight: "900",
+            }}
+          >
+            ← {t("back")}
+          </Text>
+        </Pressable>
+
+        <Text
+          style={{
+            color: theme.text,
+            fontSize: 27,
+            fontWeight: "1000",
+            marginBottom: 18,
+          }}
+        >
+          {t("helpCenter")}
+        </Text>
+
+        {items.map(([question, answer], index) => (
+          <GlassCard
+            key={index}
+            theme={theme}
+            style={{ marginBottom: 12 }}
+          >
+            <Text
+              style={{
+                color: theme.text,
+                fontSize: 15,
+                fontWeight: "900",
+                lineHeight: 22,
+              }}
+            >
+              {question}
+            </Text>
+
+            <Text
+              style={{
+                color: theme.textSoft,
+                fontSize: 13,
+                lineHeight: 21,
+                marginTop: 8,
+              }}
+            >
+              {answer}
+            </Text>
+          </GlassCard>
+        ))}
+
+        <GlassCard theme={theme}>
+          <Text
+            style={{
+              color: theme.text,
+              fontSize: 15,
+              fontWeight: "900",
+            }}
+          >
+            {t("support")}
+          </Text>
+
+          <Text
+            style={{
+              color: theme.textSoft,
+              fontSize: 13,
+              lineHeight: 21,
+              marginTop: 7,
+            }}
+          >
+            {t("supportText")}
+          </Text>
+
+          <View style={{ marginTop: 14 }}>
+            <GradientButton
+              title="WhatsApp"
+              onPress={openWhatsApp}
+              theme={theme}
+              icon="✆"
+            />
+          </View>
+        </GlassCard>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function PayPopInfoScreen({
+  language,
+  theme,
+  onBack,
+}) {
+  const t = (key) => getText(language, key);
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: theme.background,
+      }}
+    >
+      <ScrollView
+        contentContainerStyle={{
+          padding: 18,
+          paddingBottom: 30,
+        }}
+      >
+        <Pressable
+          onPress={onBack}
+          style={{
+            alignSelf: "flex-start",
+            marginBottom: 15,
+          }}
+        >
+          <Text
+            style={{
+              color: theme.primary,
+              fontWeight: "900",
+            }}
+          >
+            ← {t("back")}
+          </Text>
+        </Pressable>
+
+        <GlassCard
+          theme={theme}
+          style={{
+            alignItems: "center",
+            marginBottom: 15,
+          }}
+        >
+          <AppLogo theme={theme} size={85} />
+
+          <Text
+            style={{
+              color: theme.text,
+              fontSize: 29,
+              fontWeight: "1000",
+              marginTop: 15,
+            }}
+          >
+            PayPop
+          </Text>
+
+          <Text
+            style={{
+              color: theme.primary,
+              fontSize: 13,
+              fontWeight: "900",
+              marginTop: 4,
+            }}
+          >
+            PayPop Coin
+          </Text>
+        </GlassCard>
+
+        <GlassCard
+          theme={theme}
+          style={{ marginBottom: 12 }}
+        >
+          <Text
+            style={{
+              color: theme.text,
+              fontSize: 18,
+              fontWeight: "1000",
+            }}
+          >
+            {language === "ar"
+              ? "ما هو PayPop؟"
+              : language === "fr"
+              ? "Qu'est-ce que PayPop ?"
+              : "What is PayPop?"}
+          </Text>
+
+          <Text
+            style={{
+              color: theme.textSoft,
+              fontSize: 13,
+              lineHeight: 22,
+              marginTop: 9,
+            }}
+          >
+            {language === "ar"
+              ? "PayPop هو تطبيق مكافآت يتيح للمستخدم جمع PayPop Coin من خلال مجموعة من الأنشطة داخل التطبيق."
+              : language === "fr"
+              ? "PayPop est une application de récompenses permettant de gagner des PayPop Coin grâce à différentes activités."
+              : "PayPop is a rewards app where users can earn PayPop Coin through different activities."}
+          </Text>
+        </GlassCard>
+
+        <GlassCard theme={theme}>
+          <Text
+            style={{
+              color: theme.text,
+              fontSize: 18,
+              fontWeight: "1000",
+            }}
+          >
+            {t("pointsPerDollar")}
+          </Text>
+
+          <Text
+            style={{
+              color: theme.textSoft,
+              fontSize: 13,
+              lineHeight: 22,
+              marginTop: 9,
+            }}
+          >
+            {t("minWithdrawText")}
+          </Text>
+        </GlassCard>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ======================================================
+// MAIN APP
+// ======================================================
+
+export default function App() {
+  const [ready, setReady] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  const [user, setUser] = useState(null);
+  const [users, setUsers] = useState({});
+
+  const [language, setLanguage] = useState("ar");
+  const [currency, setCurrency] = useState("USD");
+  const [darkMode, setDarkMode] = useState(false);
+
+  const [activeScreen, setActiveScreen] = useState("home");
+
+  const theme = useMemo(
+    () => getTheme(darkMode),
+    [darkMode]
+  );
+
+  const t = (key) => getText(language, key);
+
+  useEffect(() => {
+    loadApp();
+  }, []);
+
+  useEffect(() => {
+    if (language === "ar") {
+      try {
+        if (!I18nManager.isRTL) {
+          I18nManager.allowRTL(true);
+        }
+      } catch (error) {}
+    }
+  }, [language]);
+
+  const loadApp = async () => {
+    try {
+      const [
+        storedUser,
+        storedUsers,
+        storedLanguage,
+        storedCurrency,
+        storedDarkMode,
+        firstLaunch,
+      ] = await Promise.all([
+        AsyncStorage.getItem(STORAGE.USER),
+        AsyncStorage.getItem(STORAGE.USERS),
+        AsyncStorage.getItem(STORAGE.LANGUAGE),
+        AsyncStorage.getItem(STORAGE.CURRENCY),
+        AsyncStorage.getItem(STORAGE.DARK_MODE),
+        AsyncStorage.getItem(STORAGE.FIRST_LAUNCH),
+      ]);
+
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+
+      if (storedUsers) {
+        setUsers(JSON.parse(storedUsers));
+      }
+
+      if (storedLanguage) {
+        setLanguage(storedLanguage);
+      }
+
+      if (storedCurrency) {
+        setCurrency(storedCurrency);
+      }
+
+      if (storedDarkMode !== null) {
+        setDarkMode(storedDarkMode === "true");
+      }
+
+      if (!firstLaunch) {
+        setShowWelcome(true);
+      }
+
+      setReady(true);
+    } catch (error) {
+      console.log("PayPop load error:", error);
+      setReady(true);
+    }
+  };
+
+  const saveUsers = async (nextUsers) => {
+    setUsers(nextUsers);
+
+    await AsyncStorage.setItem(
+      STORAGE.USERS,
+      JSON.stringify(nextUsers)
+    );
+  };
+
+  const saveUser = async (nextUser) => {
+    setUser(nextUser);
+
+    await AsyncStorage.setItem(
+      STORAGE.USER,
+      JSON.stringify(nextUser)
+    );
+  };
+
+  const finishWelcome = async () => {
+    setShowWelcome(false);
+
+    await AsyncStorage.setItem(
+      STORAGE.FIRST_LAUNCH,
+      "true"
+    );
+  };
+
+  const handleSignup = async (
+    email,
+    password,
+    enteredReferral
+  ) => {
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
+
+    const existingUsers = {
+      ...users,
+    };
+
+    if (existingUsers[normalizedEmail]) {
+      Alert.alert(
+        t("error"),
+        t("emailExists")
+      );
+      return;
+    }
+
+    let inviterEmail = null;
+
+    if (enteredReferral) {
+      const found = Object.values(existingUsers).find(
+        (item) =>
+          String(item.referralCode || "").toUpperCase() ===
+          String(enteredReferral).toUpperCase()
+      );
+
+      if (!found) {
+        Alert.alert(
+          t("error"),
+          t("referralInvalid")
+        );
+        return;
+      }
+
+      inviterEmail = found.email;
+    }
+
+    const newUser = {
+      id: generateUserId(),
+      email: normalizedEmail,
+      password,
+      name: normalizedEmail.split("@")[0],
+      points: inviterEmail ? 250 : 0,
+      referralCode: generateReferralCode(
+        normalizedEmail
+      ),
+      referredBy: inviterEmail,
+      referralsCount: 0,
+      referralEarnings: 0,
+      referrals: [],
+      withdrawals: [],
+      photo: null,
+      dailyReward: {
+        day: 0,
+        lastClaim: null,
+      },
+      wheel: {
+        lastSpin: null,
+      },
+      createdAt: Date.now(),
+    };
+
+    if (inviterEmail) {
+      const inviter = {
+        ...existingUsers[inviterEmail],
+      };
+
+      const reward =
+        REFERRAL_REWARDS[
+          Math.min(
+            Number(inviter.referralsCount) || 0,
+            REFERRAL_REWARDS.length - 1
+          )
+        ];
+
+      inviter.points =
+        (Number(inviter.points) || 0) + reward;
+
+      inviter.referralsCount =
+        (Number(inviter.referralsCount) || 0) + 1;
+
+      inviter.referralEarnings =
+        (Number(inviter.referralEarnings) || 0) +
+        reward;
+
+      inviter.referrals = [
+        ...(inviter.referrals || []),
+        {
+          email: normalizedEmail,
+          reward,
+          createdAt: Date.now(),
+        },
+      ];
+
+      existingUsers[inviterEmail] = inviter;
+    }
+
+    existingUsers[normalizedEmail] = newUser;
+
+    await saveUsers(existingUsers);
+    await saveUser(newUser);
+
+    if (inviterEmail) {
+      Alert.alert(
+        t("success"),
+        t("referralSuccess")
+      );
+    } else {
+      Alert.alert(
+        t("success"),
+        t("accountCreated")
+      );
+    }
+
+    setActiveScreen("home");
+  };
+
+  const handleLogin = async (
+    email,
+    password
+  ) => {
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
+
+    const found = users[normalizedEmail];
+
+    if (!found || found.password !== password) {
+      Alert.alert(
+        t("error"),
+        t("invalidLogin")
+      );
+      return;
+    }
+
+    await saveUser(found);
+
+    Alert.alert(
+      t("success"),
+      t("loginSuccess")
+    );
+
+    setActiveScreen("home");
+  };
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem(STORAGE.USER);
+
+    setUser(null);
+    setActiveScreen("home");
+  };
+
+  const handleUpdateUser = async (updates) => {
+    if (!user) return;
+
+    const nextUser = {
+      ...user,
+      ...updates,
+    };
+
+    const nextUsers = {
+      ...users,
+      [user.email]: nextUser,
+    };
+
+    await saveUsers(nextUsers);
+    await saveUser(nextUser);
+  };
+
+  const handleLanguageChange = async (nextLanguage) => {
+    setLanguage(nextLanguage);
+
+    await AsyncStorage.setItem(
+      STORAGE.LANGUAGE,
+      nextLanguage
+    );
+  };
+
+  const handleCurrencyChange = async (nextCurrency) => {
+    setCurrency(nextCurrency);
+
+    await AsyncStorage.setItem(
+      STORAGE.CURRENCY,
+      nextCurrency
+    );
+  };
+
+  const handleDarkModeChange = async (enabled) => {
+    setDarkMode(enabled);
+
+    await AsyncStorage.setItem(
+      STORAGE.DARK_MODE,
+      String(enabled)
+    );
+  };
+
+  const handleClaimDaily = async () => {
+    if (!user) return;
+
+    const lastClaim =
+      user.dailyReward?.lastClaim;
+
+    if (
+      lastClaim &&
+      !canClaimAfter24Hours(lastClaim)
+    ) {
+      Alert.alert(
+        t("warning"),
+        t("dailyAlreadyClaimed")
+      );
+      return;
+    }
+
+    const currentDay =
+      Number(user.dailyReward?.day) || 0;
+
+    const reward =
+      DAILY_REWARDS[
+        Math.min(
+          currentDay,
+          DAILY_REWARDS.length - 1
+        )
+      ];
+
+    const nextDay =
+      (currentDay + 1) % DAILY_REWARDS.length;
+
+    const nextUser = {
+      ...user,
+      points:
+        (Number(user.points) || 0) + reward,
+      dailyReward: {
+        day: nextDay,
+        lastClaim: Date.now(),
+      },
+    };
+
+    await handleUpdateUser(nextUser);
+
+    Alert.alert(
+      t("success"),
+      `+${reward} PayPop`
+    );
+  };
+
+  const handleWatchVideo = async () => {
+    if (!user) return;
+
+    const reward = 100;
+
+    const nextUser = {
+      ...user,
+      points:
+        (Number(user.points) || 0) + reward,
+    };
+
+    await handleUpdateUser(nextUser);
+
+    Alert.alert(
+      t("success"),
+      `+${reward} PayPop`
+    );
+  };
+
+  const handleShare = async () => {
+    if (!user) return;
+
+    try {
+      await Share.share({
+        message:
+          language === "ar"
+            ? `انضم إلى PayPop واربح نقاطاً! كود الدعوة: ${user.referralCode}`
+            : language === "fr"
+            ? `Rejoignez PayPop et gagnez des points ! Code : ${user.referralCode}`
+            : `Join PayPop and earn points! Referral code: ${user.referralCode}`,
+      });
+    } catch (error) {}
+  };
+
+  const handleWheelReward = async (reward) => {
+    if (!user) return;
+
+    const pointsReward = Number(reward) || 0;
+
+    if (pointsReward <= 0) return;
+
+    const lastSpin =
+      user.wheel?.lastSpin || null;
+
+    if (
+      lastSpin &&
+      !canClaimAfter24Hours(lastSpin)
+    ) {
+      Alert.alert(
+        t("warning"),
+        language === "ar"
+          ? "لقد استعملت دورة اليوم. حاول بعد 24 ساعة."
+          : language === "fr"
+          ? "Vous avez utilisé votre tour. Réessayez dans 24 heures."
+          : "You already used today's spin. Try again in 24 hours."
+      );
+      return;
+    }
+
+    const nextUser = {
+      ...user,
+      points:
+        (Number(user.points) || 0) +
+        pointsReward,
+      wheel: {
+        ...(user.wheel || {}),
+        lastSpin: Date.now(),
+      },
+    };
+
+    await handleUpdateUser(nextUser);
+
+    Alert.alert(
+      t("success"),
+      `+${pointsReward} PayPop`
+    );
+
+    setActiveScreen("earn");
+  };
+
+  const handleWithdraw = async ({
+    method,
+    details,
+    amountUSD,
+    points,
+  }) => {
+    if (!user) return;
+
+    const currentPoints =
+      Number(user.points) || 0;
+
+    if (points > currentPoints) {
+      Alert.alert(
+        t("warning"),
+        t("insufficientBalance")
+      );
+      return;
+    }
+
+    const withdrawal = {
+      id: `wd_${Date.now()}_${Math.floor(
+        Math.random() * 100000
+      )}`,
+      method: method.name,
+      methodId: method.id,
+      details,
+      amountUSD,
+      points,
+      logo: method.logo,
+      status: "pending",
+      createdAt: Date.now(),
+    };
+
+    const nextUser = {
+      ...user,
+      points: currentPoints - points,
+      withdrawals: [
+        ...(user.withdrawals || []),
+        withdrawal,
+      ],
+    };
+
+    await handleUpdateUser(nextUser);
+
+    Alert.alert(
+      t("success"),
+      t("withdrawalSent")
+    );
+  };
+
+  if (!ready) {
+    return (
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: theme.background,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <AppLogo theme={theme} size={78} />
+
+        <Text
+          style={{
+            color: theme.text,
+            fontSize: 25,
+            fontWeight: "1000",
+            marginTop: 15,
+          }}
+        >
+          PayPop
+        </Text>
+
+        <Text
+          style={{
+            color: theme.textSoft,
+            marginTop: 6,
+            fontSize: 12,
+          }}
+        >
+          PayPop Coin
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (showWelcome) {
+    return (
+      <WelcomeScreen
+        onContinue={finishWelcome}
+        language={language}
+        theme={theme}
+      />
+    );
+  }
+
+  if (!user) {
+    return (
+      <AuthScreen
+        onLogin={handleLogin}
+        onSignup={handleSignup}
+        language={language}
+        theme={theme}
+      />
+    );
+  }
+
+  const navigate = (screen) => {
+    setActiveScreen(screen);
+  };
+
+  let content = null;
+
+  if (activeScreen === "home") {
+    content = (
+      <HomeScreen
+        user={user}
+        language={language}
+        currency={currency}
+        theme={theme}
+        onNavigate={navigate}
+        onClaimDaily={handleClaimDaily}
+        onWheel={() => navigate("wheel")}
+        onWatchVideo={handleWatchVideo}
+        onShare={handleShare}
+      />
+    );
+  } else if (activeScreen === "earn") {
+    content = (
+      <EarnScreen
+        user={user}
+        language={language}
+        currency={currency}
+        theme={theme}
+        onClaimDaily={handleClaimDaily}
+        onWheel={() => navigate("wheel")}
+        onWatchVideo={handleWatchVideo}
+        onShare={handleShare}
+      />
+    );
+  } else if (activeScreen === "wallet") {
+    content = (
+      <WalletScreen
+        user={user}
+        language={language}
+        currency={currency}
+        theme={theme}
+        onWithdraw={handleWithdraw}
+      />
+    );
+  } else if (activeScreen === "profile") {
+    content = (
+      <ProfileScreen
+        user={user}
+        language={language}
+        currency={currency}
+        darkMode={darkMode}
+        theme={theme}
+        onLanguageChange={handleLanguageChange}
+        onCurrencyChange={handleCurrencyChange}
+        onDarkModeChange={handleDarkModeChange}
+        onLogout={handleLogout}
+        onUpdateUser={handleUpdateUser}
+      />
+    );
+  } else if (activeScreen === "help") {
+    content = (
+      <HelpCenterScreen
+        language={language}
+        theme={theme}
+        onBack={() => navigate("profile")}
+      />
+    );
+  } else if (activeScreen === "info") {
+    content = (
+      <PayPopInfoScreen
+        language={language}
+        theme={theme}
+        onBack={() => navigate("profile")}
+      />
+    );
+  } else if (activeScreen === "wheel") {
+    const Wheel = require("./Wheel").default;
+
+    content = (
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: theme.background,
+        }}
+      >
+        <Pressable
+          onPress={() => navigate("earn")}
+          style={{
+            paddingHorizontal: 18,
+            paddingTop: 12,
+            paddingBottom: 4,
+          }}
+        >
+          <Text
+            style={{
+              color: theme.primary,
+              fontWeight: "900",
+            }}
+          >
+            ← {t("back")}
+          </Text>
+        </Pressable>
+
+        <View style={{ flex: 1 }}>
+          <Wheel
+            onReward={handleWheelReward}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const showBottomNav = [
+    "home",
+    "earn",
+    "wallet",
+    "profile",
+  ].includes(activeScreen);
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: theme.background,
+      }}
+    >
+      <StatusBar
+        barStyle={
+          darkMode
+            ? "light-content"
+            : "dark-content"
+        }
+        backgroundColor={theme.background}
+      />
+
+      <View style={{ flex: 1 }}>
+        {content}
+      </View>
+
+      {showBottomNav ? (
+        <BottomNavigation
+          active={activeScreen}
+          onNavigate={navigate}
+          theme={theme}
+          language={language}
+        />
+      ) : null}
+    </SafeAreaView>
+  );
+}
+
+// ======================================================
+// APP.JS انتهى — PART 6/6
+// ======================================================
