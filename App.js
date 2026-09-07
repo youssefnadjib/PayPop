@@ -24,6 +24,7 @@ const STORAGE = {
   USERS: "@paypop_users",
   LANGUAGE: "@paypop_language",
   THEME: "@paypop_theme",
+  DARK_MODE: "@paypop_dark_mode",
   CURRENCY: "@paypop_currency",
   FIRST_LAUNCH: "@paypop_first_launch",
 };
