@@ -2249,20 +2249,6 @@ function EarnScreen({
           currency={currency}
         />
 
-heme.cardSoft,
-          </View>
-
-          <GradientButton
-            title={
-              dailyClaimed
-                ? t("claimed")
-                : t("claim")
-            }
-            onPress={onClaimDaily}
-            disabled={dailyClaimed}
-            theme={theme}
-          />
-        </GlassCard>
 
         <SectionTitle
           title={t("earnNow")}
