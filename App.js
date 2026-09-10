@@ -2206,9 +2206,6 @@ function EarnScreen({
 }) {
   const t = (key) => getText(language, key);
 
-  const dailyClaimed =
-    user?.dailyReward?.lastClaim &&
-    !canClaimAfter24Hours(user.dailyReward.lastClaim);
 
   return (
     <SafeAreaView
@@ -2253,38 +2250,6 @@ function EarnScreen({
         />
 
 heme.cardSoft,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: active
-                          ? "#FFFFFF"
-                          : theme.textSoft,
-                        fontSize: 10,
-                        fontWeight: "900",
-                      }}
-                    >
-                      {index + 1}
-                    </Text>
-                  </View>
-
-                  <Text
-                    style={{
-                      color: active
-                        ? theme.text
-                        : theme.textSoft,
-                      fontSize: 8,
-                      fontWeight: "800",
-                      marginTop: 4,
-                    }}
-                  >
-                    {reward}
-                  </Text>
-                </View>
-              );
-            })}
           </View>
 
           <GradientButton
