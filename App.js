@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import {
   Alert,
+  Animated,
+  Easing,
   Image,
   I18nManager,
   Linking,
@@ -19,6 +21,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
+import { Audio } from "expo-av";
 
 const APP_NAME = "PayPop";
 const APP_VERSION = "1.0.0";
@@ -47,6 +50,55 @@ const DAILY_REWARDS = [
   200,
   250,
 ];
+
+// PayPop sound system — local assets, safe fallback if audio fails
+const PAYPOP_SOUNDS = {
+  click: require("./paypop_click.wav"),
+  reward: require("./paypop_reward.wav"),
+  spin: require("./paypop_spin.wav"),
+  win: require("./paypop_win.wav"),
+};
+
+const payPopSoundPool = {};
+
+async function loadPayPopSounds() {
+  try {
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+      shouldDuckAndroid: true,
+    });
+
+    for (const [name, source] of Object.entries(PAYPOP_SOUNDS)) {
+      if (!payPopSoundPool[name]) {
+        const result = await Audio.Sound.createAsync(source, {
+          volume: 0.75,
+          shouldPlay: false,
+        });
+        payPopSoundPool[name] = result.sound;
+      }
+    }
+  } catch (error) {
+    console.log("PayPop sound load skipped:", error?.message || error);
+  }
+}
+
+async function playPayPopSound(name) {
+  try {
+    const sound = payPopSoundPool[name];
+    if (!sound) return;
+    await sound.replayAsync();
+  } catch (error) {}
+}
+
+async function unloadPayPopSounds() {
+  for (const name of Object.keys(payPopSoundPool)) {
+    try {
+      await payPopSoundPool[name]?.unloadAsync();
+    } catch (error) {}
+    delete payPopSoundPool[name];
+  }
+}
 
 const REFERRAL_REWARDS = [
   250,
@@ -88,42 +140,42 @@ const WITHDRAW_METHODS = [
     name: "PayPal",
     field: "email",
     placeholder: "PayPal Email",
-    logo: "https://cdn.simpleicons.org/paypal",
+    brand: "paypal",
   },
   {
     id: "binance",
     name: "Binance",
     field: "uid",
     placeholder: "Binance UID",
-    logo: "https://cdn.simpleicons.org/binance",
+    brand: "binance",
   },
   {
     id: "redotpay",
     name: "RedotPay",
     field: "uid",
     placeholder: "RedotPay UID",
-    logo: "https://cdn.simpleicons.org/redotpay",
+    brand: "redotpay",
   },
   {
     id: "baridimob",
     name: "BaridiMob",
     field: "rip",
     placeholder: "RIP / CCP",
-    logo: null,
+    brand: "baridimob",
   },
   {
     id: "freefire",
     name: "Free Fire",
     field: "id",
     placeholder: "Free Fire ID",
-    logo: null,
+    brand: "freefire",
   },
   {
     id: "pubg",
     name: "PUBG",
     field: "id",
     placeholder: "PUBG ID",
-    logo: null,
+    brand: "pubg",
   },
 ];
 
@@ -690,56 +742,33 @@ function openWhatsApp() {
   });
 }
 
-function LogoImage({ uri, size = 42 }) {
+function LogoImage({ uri, brand, size = 46 }) {
   const [failed, setFailed] = useState(false);
 
-  if (!uri || failed) {
+  const badge = {
+    paypal: ["#1877F2", "PP"],
+    binance: ["#F3BA2F", "◆"],
+    redotpay: ["#151823", "R"],
+    baridimob: ["#0C9B62", "B"],
+    freefire: ["#FF7A18", "FF"],
+    pubg: ["#C79A32", "PUBG"],
+  }[brand] || ["#7356F7", "P"];
+
+  if (uri && !failed) {
     return (
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 4,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#EEF0F7",
-        }}
-      >
-        <Text
-          style={{
-            fontSize: size * 0.38,
-            fontWeight: "900",
-            color: "#596078",
-          }}
-        >
-          P
-        </Text>
+      <View style={{ width: size, height: size, borderRadius: 15, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <Image source={{ uri }} onError={() => setFailed(true)} resizeMode="contain" style={{ width: size * 0.72, height: size * 0.72 }} />
       </View>
     );
   }
 
   return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 4,
-        overflow: "hidden",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#FFFFFF",
-      }}
+    <LinearGradient
+      colors={[badge[0], "#111426"]}
+      style={{ width: size, height: size, borderRadius: 15, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }}
     >
-      <Image
-        source={{ uri }}
-        onError={() => setFailed(true)}
-        resizeMode="contain"
-        style={{
-          width: size * 0.72,
-          height: size * 0.72,
-        }}
-      />
-    </View>
+      <Text style={{ color: "#FFFFFF", fontSize: brand === "pubg" ? size * 0.22 : size * 0.34, fontWeight: "1000" }}>{badge[1]}</Text>
+    </LinearGradient>
   );
 }
 
@@ -761,7 +790,10 @@ function GradientButton({
 }) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        playPayPopSound("click");
+        onPress?.();
+      }}
       disabled={disabled}
       style={({ pressed }) => [
         {
@@ -854,42 +886,39 @@ function SectionTitle({ title, subtitle, theme }) {
   );
 }
 
-function AppLogo({ theme, size = 74 }) {
+function PayPopCoin({ size = 52, compact = false }) {
+  const coin = compact ? size * 0.86 : size;
   return (
     <View
       style={{
-        width: size,
-        height: size,
-        borderRadius: size * 0.28,
-        alignItems: "center",
-        justifyContent: "center",
-        shadowColor: theme.primary,
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 6 },
-        elevation: 6,
+        width: coin,
+        height: coin,
+        borderRadius: coin / 2,
+        padding: 3,
+        shadowColor: "#FFD45A",
+        shadowOpacity: 0.45,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 7,
       }}
     >
       <LinearGradient
-        colors={[theme.primary, theme.secondary, theme.gold]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        colors={["#FFF4A8", "#FFD34F", "#E79B19"]}
         style={{
-          width: "100%",
-          height: "100%",
-          borderRadius: size * 0.28,
+          flex: 1,
+          borderRadius: coin / 2,
           alignItems: "center",
           justifyContent: "center",
         }}
       >
         <View
           style={{
-            width: size * 0.58,
-            height: size * 0.58,
-            borderRadius: size * 0.18,
-            backgroundColor: "rgba(255,255,255,0.16)",
+            width: coin - 10,
+            height: coin - 10,
+            borderRadius: (coin - 10) / 2,
             borderWidth: 2,
-            borderColor: "rgba(255,255,255,0.55)",
+            borderColor: "rgba(255,255,255,0.75)",
+            backgroundColor: "#7356F7",
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -897,16 +926,32 @@ function AppLogo({ theme, size = 74 }) {
           <Text
             style={{
               color: "#FFFFFF",
-              fontSize: size * 0.32,
+              fontSize: coin * 0.32,
               fontWeight: "1000",
             }}
           >
             P
           </Text>
+          {!compact ? (
+            <Text
+              style={{
+                color: "rgba(255,255,255,0.9)",
+                fontSize: Math.max(6, coin * 0.105),
+                fontWeight: "900",
+                marginTop: -2,
+              }}
+            >
+              PayPop
+            </Text>
+          ) : null}
         </View>
       </LinearGradient>
     </View>
   );
+}
+
+function AppLogo({ theme, size = 74 }) {
+  return <PayPopCoin size={size} />;
 }
 
 function BalanceCard({
@@ -981,26 +1026,36 @@ function BalanceCard({
           justifyContent: "space-between",
         }}
       >
-        <View>
-          <Text
-            style={{
-              color: "rgba(255,255,255,0.7)",
-              fontSize: 12,
-            }}
-          >
-            PayPop Coin
-          </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <PayPopCoin size={52} compact />
+          <View>
+            <Text
+              style={{
+                color: "rgba(255,255,255,0.72)",
+                fontSize: 12,
+                fontWeight: "700",
+              }}
+            >
+              PayPop Coin
+            </Text>
 
-          <Text
-            style={{
-              color: "#FFFFFF",
-              fontSize: 17,
-              fontWeight: "900",
-              marginTop: 3,
-            }}
-          >
-            {formatPoints(points)} {t("points")}
-          </Text>
+            <Text
+              style={{
+                color: "#FFFFFF",
+                fontSize: 18,
+                fontWeight: "1000",
+                marginTop: 2,
+              }}
+            >
+              {formatPoints(points)} {t("points")}
+            </Text>
+          </View>
         </View>
 
         <View
@@ -1228,26 +1283,10 @@ function BottomNavigation({
   const t = (key) => getText(language, key);
 
   const items = [
-    {
-      id: "home",
-      icon: "⌂",
-      label: t("home"),
-    },
-    {
-      id: "earn",
-      icon: "⚡",
-      label: t("earn"),
-    },
-    {
-      id: "wallet",
-      icon: "💰",
-      label: t("wallet"),
-    },
-    {
-      id: "profile",
-      icon: "👤",
-      label: t("profile"),
-    },
+    { id: "home", icon: "⌂", label: t("home") },
+    { id: "earn", icon: "⚡", label: t("earn") },
+    { id: "wallet", icon: "$", label: t("wallet") },
+    { id: "profile", icon: "P", label: t("profile") },
   ];
 
   return (
@@ -1255,57 +1294,67 @@ function BottomNavigation({
       style={{
         backgroundColor: theme.nav,
         borderTopWidth: 1,
-        borderTopColor: theme.border,
-        paddingHorizontal: 8,
-        paddingTop: 8,
-        paddingBottom: 7,
+        borderTopColor: "rgba(120,110,190,0.22)",
+        paddingHorizontal: 10,
+        paddingTop: 9,
+        paddingBottom: 9,
         flexDirection: "row",
         justifyContent: "space-around",
+        shadowColor: "#000",
+        shadowOpacity: 0.25,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: -6 },
+        elevation: 16,
       }}
     >
       {items.map((item) => {
         const selected = active === item.id;
-
         return (
           <Pressable
             key={item.id}
-            onPress={() => onNavigate(item.id)}
-            style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingVertical: 4,
+            onPress={() => {
+              playPayPopSound("click");
+              onNavigate(item.id);
             }}
+            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
           >
             <View
               style={{
-                width: 43,
-                height: 31,
-                borderRadius: 12,
-                backgroundColor: selected
-                  ? theme.primary
-                  : "transparent",
+                width: 62,
+                height: 46,
+                borderRadius: 17,
+                backgroundColor: selected ? theme.primary : "transparent",
+                borderWidth: selected ? 1 : 0,
+                borderColor: selected ? "rgba(255,255,255,0.22)" : "transparent",
                 alignItems: "center",
                 justifyContent: "center",
+                shadowColor: selected ? theme.primary : "transparent",
+                shadowOpacity: selected ? 0.45 : 0,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 5 },
+                elevation: selected ? 7 : 0,
               }}
             >
-              <Text
-                style={{
-                  fontSize: selected ? 19 : 18,
-                  color: selected ? "#FFFFFF" : theme.textSoft,
-                  fontWeight: "900",
-                }}
-              >
-                {item.icon}
-              </Text>
+              {item.id === "profile" ? (
+                <PayPopCoin size={25} compact />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: selected ? 22 : 20,
+                    color: selected ? "#FFFFFF" : theme.textSoft,
+                    fontWeight: "1000",
+                  }}
+                >
+                  {item.icon}
+                </Text>
+              )}
             </View>
-
             <Text
               style={{
                 color: selected ? theme.primary : theme.textSoft,
                 fontSize: 10,
-                fontWeight: selected ? "900" : "700",
-                marginTop: 3,
+                fontWeight: selected ? "1000" : "700",
+                marginTop: 4,
               }}
             >
               {item.label}
@@ -1858,6 +1907,184 @@ function WelcomeScreen({
 // PART 4/6 — HOME + EARN
 // ======================================================
 
+function DailyRewardChest({
+  reward,
+  claimed,
+  onClaim,
+  theme,
+  language,
+}) {
+  const [opening, setOpening] = useState(false);
+  const lidY = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const title =
+    language === "ar"
+      ? "صندوق المكافأة اليومية"
+      : language === "fr"
+      ? "Coffre de récompense quotidienne"
+      : "Daily Reward Chest";
+
+  const subtitle = claimed
+    ? language === "ar"
+      ? "تم الاستلام — المكافأة القادمة بعد 24 ساعة"
+      : language === "fr"
+      ? "Déjà reçu — prochaine récompense dans 24 h"
+      : "Claimed — next reward in 24 hours"
+    : language === "ar"
+    ? "افتح الصندوق واحصل على مكافأتك"
+    : language === "fr"
+    ? "Ouvrez le coffre et récupérez votre récompense"
+    : "Open the chest and collect your reward";
+
+  const handlePress = () => {
+    if (claimed || opening) return;
+    playPayPopSound("click");
+    setOpening(true);
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1.035, useNativeDriver: true }),
+      Animated.timing(lidY, {
+        toValue: -18,
+        duration: 420,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      playPayPopSound("reward");
+      onClaim?.();
+      setTimeout(() => {
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
+        setOpening(false);
+      }, 450);
+    });
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable onPress={handlePress} disabled={claimed || opening}>
+        <LinearGradient
+          colors={["#171A2D", "#24213F"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            borderRadius: 26,
+            borderWidth: 1,
+            borderColor: claimed ? "#3C405B" : "#6E5AF7",
+            padding: 16,
+            marginBottom: 18,
+            overflow: "hidden",
+          }}
+        >
+          <View
+            style={{
+              position: "absolute",
+              width: 160,
+              height: 160,
+              borderRadius: 80,
+              right: -70,
+              top: -70,
+              backgroundColor: "rgba(132,92,255,0.14)",
+            }}
+          />
+
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View
+              style={{
+                width: 104,
+                height: 104,
+                alignItems: "center",
+                justifyContent: "flex-end",
+                marginRight: 15,
+              }}
+            >
+              <Animated.View
+                style={{
+                  position: "absolute",
+                  top: 9,
+                  width: 78,
+                  height: 30,
+                  borderRadius: 9,
+                  backgroundColor: "#FFD34F",
+                  borderWidth: 2,
+                  borderColor: "#FFF0A0",
+                  transform: [{ translateY: lidY }],
+                  zIndex: 3,
+                }}
+              />
+              <View
+                style={{
+                  width: 84,
+                  height: 66,
+                  borderRadius: 12,
+                  backgroundColor: "#C88418",
+                  borderWidth: 2,
+                  borderColor: "#FFD95A",
+                  overflow: "hidden",
+                }}
+              >
+                <View
+                  style={{
+                    position: "absolute",
+                    left: 34,
+                    top: 0,
+                    width: 15,
+                    height: "100%",
+                    backgroundColor: "#F7C735",
+                  }}
+                />
+                <View
+                  style={{
+                    position: "absolute",
+                    left: 29,
+                    top: 26,
+                    width: 25,
+                    height: 17,
+                    borderRadius: 5,
+                    backgroundColor: "#FFF0A0",
+                    borderWidth: 2,
+                    borderColor: "#DCA42A",
+                  }}
+                />
+              </View>
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: "#FFFFFF", fontSize: 18, fontWeight: "1000" }}>
+                {title}
+              </Text>
+              <Text style={{ color: "#AEB3CC", fontSize: 12, lineHeight: 18, marginTop: 5 }}>
+                {subtitle}
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 10 }}>
+                <PayPopCoin size={30} compact />
+                <Text style={{ color: "#FFD34F", fontSize: 19, fontWeight: "1000", marginLeft: 8 }}>
+                  +{reward} PayPop
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View
+            style={{
+              marginTop: 14,
+              borderRadius: 15,
+              backgroundColor: claimed ? "#25283B" : theme.primary,
+              paddingVertical: 12,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontWeight: "1000", fontSize: 14 }}>
+              {claimed
+                ? language === "ar" ? "تم الاستلام" : language === "fr" ? "Déjà reçu" : "Claimed"
+                : language === "ar" ? "افتح الصندوق الآن" : language === "fr" ? "Ouvrir maintenant" : "Open now"}
+            </Text>
+          </View>
+        </LinearGradient>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 function HomeScreen({
   user,
   language,
@@ -1945,132 +2172,22 @@ function HomeScreen({
         />
 
         <SectionTitle
-          title={t("earnNow")}
-          subtitle={t("welcomeSubtitle")}
-          theme={theme}
-        />
-
-        <EarnCard
-          icon="🎁"
           title={t("dailyReward")}
-          subtitle={
-            dailyClaimed
-              ? t("dailyAvailableTomorrow")
-              : "Day " +
-                ((Number(user?.dailyReward?.day) || 0) + 1)
-          }
-          reward={
-            DAILY_REWARDS[
-              Math.min(
-                Number(user?.dailyReward?.day) || 0,
-                DAILY_REWARDS.length - 1
-              )
-            ]
-          }
-          buttonText={
-            dailyClaimed ? t("claimed") : t("claim")
-          }
-          disabled={dailyClaimed}
-          onPress={onClaimDaily}
+          subtitle={t("pointsPerDollar")}
           theme={theme}
         />
 
-        <EarnCard
-          icon="🎡"
-          title={t("wheel")}
-          subtitle={
-            language === "ar"
-              ? "اربح نقاط من عجلة الحظ"
-              : language === "fr"
-              ? "Gagnez des points avec la roue"
-              : "Win points with the lucky wheel"
-          }
-          reward="10–250"
-          buttonText={t("spin")}
-          onPress={onWheel}
-          theme={theme}
-        />
-
-        <EarnCard
-          icon="📺"
-          title={t("watchVideo")}
-          subtitle={
-            language === "ar"
-              ? "شاهد فيديو واحصل على نقاط"
-              : language === "fr"
-              ? "Regardez une vidéo et gagnez des points"
-              : "Watch a video and earn points"
-          }
-          reward="100"
-          buttonText={t("watch")}
-          onPress={onWatchVideo}
-          theme={theme}
-        />
-
-        <EarnCard
-          icon="🎮"
-          title={t("games")}
-          subtitle={
-            language === "ar"
-              ? "ألعاب ومكافآت قادمة"
-              : language === "fr"
-              ? "Jeux et récompenses bientôt"
-              : "Games and rewards coming soon"
-          }
-          reward="250"
-          buttonText={t("continue")}
-          onPress={() =>
-            Alert.alert(
-              t("games"),
-              language === "ar"
-                ? "قسم الألعاب سيكون متاحاً قريباً."
-                : language === "fr"
-                ? "La section jeux sera bientôt disponible."
-                : "The games section will be available soon."
+        <DailyRewardChest
+          reward={DAILY_REWARDS[
+            Math.min(
+              Number(user?.dailyReward?.day) || 0,
+              DAILY_REWARDS.length - 1
             )
-          }
+          ]}
+          claimed={dailyClaimed}
+          onClaim={onClaimDaily}
           theme={theme}
-        />
-
-        <EarnCard
-          icon="👥"
-          title={t("inviteFriends")}
-          subtitle={
-            language === "ar"
-              ? "ادعُ أصدقاءك واربح نقاطاً"
-              : language === "fr"
-              ? "Invitez vos amis et gagnez des points"
-              : "Invite friends and earn points"
-          }
-          reward="250+"
-          buttonText={t("invite")}
-          onPress={onShare}
-          theme={theme}
-        />
-
-        <EarnCard
-          icon="⭐"
-          title={t("specialReward")}
-          subtitle={
-            language === "ar"
-              ? "مكافآت خاصة للمستخدمين النشطين"
-              : language === "fr"
-              ? "Récompenses spéciales pour les utilisateurs actifs"
-              : "Special rewards for active users"
-          }
-          reward="500"
-          buttonText={t("continue")}
-          onPress={() =>
-            Alert.alert(
-              t("specialReward"),
-              language === "ar"
-                ? "المكافآت الخاصة ستكون متاحة قريباً."
-                : language === "fr"
-                ? "Les récompenses spéciales seront bientôt disponibles."
-                : "Special rewards will be available soon."
-            )
-          }
-          theme={theme}
+          language={language}
         />
       </ScrollView>
     </SafeAreaView>
@@ -2135,81 +2252,7 @@ function EarnScreen({
           currency={currency}
         />
 
-        <SectionTitle
-          title={t("dailyReward")}
-          subtitle={t("pointsPerDollar")}
-          theme={theme}
-        />
-
-        <GlassCard
-          theme={theme}
-          style={{
-            marginBottom: 18,
-            overflow: "hidden",
-          }}
-        >
-          <LinearGradient
-            colors={[
-              theme.primary,
-              theme.secondary,
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              margin: -16,
-              marginBottom: 15,
-              padding: 20,
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ fontSize: 34 }}>🎁</Text>
-
-            <Text
-              style={{
-                color: "#FFFFFF",
-                fontSize: 22,
-                fontWeight: "1000",
-                marginTop: 8,
-              }}
-            >
-              +{DAILY_REWARDS[
-                Math.min(
-                  Number(user?.dailyReward?.day) || 0,
-                  DAILY_REWARDS.length - 1
-                )
-              ]} PayPop
-            </Text>
-          </LinearGradient>
-
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              marginBottom: 15,
-            }}
-          >
-            {DAILY_REWARDS.map((reward, index) => {
-              const currentDay =
-                Number(user?.dailyReward?.day) || 0;
-
-              const active = index <= currentDay;
-
-              return (
-                <View
-                  key={`${reward}-${index}`}
-                  style={{
-                    alignItems: "center",
-                    flex: 1,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 29,
-                      height: 29,
-                      borderRadius: 10,
-                      backgroundColor: active
-                        ? theme.gold
-                        : theme.cardSoft,
+heme.cardSoft,
                       alignItems: "center",
                       justifyContent: "center",
                     }}
@@ -2262,7 +2305,7 @@ function EarnScreen({
         />
 
         <EarnCard
-          icon="🎡"
+          icon="◉"
           title={t("wheel")}
           subtitle={
             language === "ar"
@@ -2278,7 +2321,7 @@ function EarnScreen({
         />
 
         <EarnCard
-          icon="📺"
+          icon="▶"
           title={t("watchVideo")}
           subtitle={
             language === "ar"
@@ -2294,7 +2337,7 @@ function EarnScreen({
         />
 
         <EarnCard
-          icon="👥"
+          icon="↗"
           title={t("inviteFriends")}
           subtitle={
             language === "ar"
@@ -2821,7 +2864,7 @@ function ProfileScreen({
 
       const result =
         await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ["images"],
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsEditing: true,
           aspect: [1, 1],
           quality: 0.85,
@@ -3748,7 +3791,11 @@ export default function App() {
   const t = (key) => getText(language, key);
 
   useEffect(() => {
+    loadPayPopSounds();
     loadApp();
+    return () => {
+      unloadPayPopSounds();
+    };
   }, []);
 
   useEffect(() => {
@@ -4011,20 +4058,58 @@ export default function App() {
   };
 
   const handleLanguageChange = async (nextLanguage) => {
-    setLanguage(nextLanguage);
+    if (nextLanguage === language) return;
 
-    await AsyncStorage.setItem(
-      STORAGE.LANGUAGE,
-      nextLanguage
+    const names = {
+      ar: "العربية",
+      fr: "Français",
+      en: "English",
+    };
+
+    Alert.alert(
+      language === "ar" ? "تأكيد تغيير اللغة" : language === "fr" ? "Confirmer la langue" : "Confirm language",
+      language === "ar"
+        ? `هل تريد تغيير اللغة إلى ${names[nextLanguage]}؟`
+        : language === "fr"
+        ? `Voulez-vous passer à ${names[nextLanguage]} ?`
+        : `Change the language to ${names[nextLanguage]}?`,
+      [
+        { text: language === "ar" ? "إلغاء" : language === "fr" ? "Annuler" : "Cancel", style: "cancel" },
+        {
+          text: language === "ar" ? "نعم، تغيير" : language === "fr" ? "Oui, changer" : "Yes, change",
+          onPress: async () => {
+            playPayPopSound("click");
+            setLanguage(nextLanguage);
+            await AsyncStorage.setItem(STORAGE.LANGUAGE, nextLanguage);
+          },
+        },
+      ]
     );
   };
 
   const handleCurrencyChange = async (nextCurrency) => {
-    setCurrency(nextCurrency);
+    if (nextCurrency === currency) return;
+    const from = CURRENCIES[currency];
+    const to = CURRENCIES[nextCurrency];
 
-    await AsyncStorage.setItem(
-      STORAGE.CURRENCY,
-      nextCurrency
+    Alert.alert(
+      language === "ar" ? "تأكيد تغيير العملة" : language === "fr" ? "Confirmer la devise" : "Confirm currency",
+      language === "ar"
+        ? `هل تريد تغيير العملة من ${from.code} إلى ${to.code}؟`
+        : language === "fr"
+        ? `Voulez-vous changer la devise de ${from.code} à ${to.code} ?`
+        : `Change the currency from ${from.code} to ${to.code}?`,
+      [
+        { text: language === "ar" ? "إلغاء" : language === "fr" ? "Annuler" : "Cancel", style: "cancel" },
+        {
+          text: language === "ar" ? "نعم، تغيير" : language === "fr" ? "Oui, changer" : "Yes, change",
+          onPress: async () => {
+            playPayPopSound("click");
+            setCurrency(nextCurrency);
+            await AsyncStorage.setItem(STORAGE.CURRENCY, nextCurrency);
+          },
+        },
+      ]
     );
   };
 
@@ -4158,11 +4243,7 @@ export default function App() {
 
     await handleUpdateUser(nextUser);
 
-    Alert.alert(
-      t("success"),
-      `+${pointsReward} PayPop`
-    );
-
+    await playPayPopSound("win");
     setActiveScreen("earn");
   };
 
@@ -4378,6 +4459,13 @@ export default function App() {
         <View style={{ flex: 1 }}>
           <Wheel
             onReward={handleWheelReward}
+            onSpinStart={() => playPayPopSound("spin")}
+            onWin={() => playPayPopSound("win")}
+            language={language}
+            disabled={Boolean(
+              user?.wheel?.lastSpin &&
+              !canClaimAfter24Hours(user.wheel.lastSpin)
+            )}
           />
         </View>
       </SafeAreaView>
